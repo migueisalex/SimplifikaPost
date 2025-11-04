@@ -43,10 +43,9 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
       await onGenerate(data.base64Data, data.mimeType);
       onClose(); // Close modal on success
 
-    } catch (e: any) {
+    } catch (e) {
       console.error("Erro ao gerar imagem:", e);
-      // Exibe a mensagem de erro exata do backend
-      setError(e.message || "Não foi possível gerar a imagem. Tente novamente.");
+      setError("Não foi possível gerar a imagem. Verifique o prompt ou tente novamente.");
     } finally {
       setIsLoading(false);
     }
