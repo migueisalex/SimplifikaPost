@@ -64,8 +64,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
     });
 
+    const text = response.text;
+    if (text === undefined) {
+      console.error('Gemini API returned an empty response text.');
+      return res.status(500).json({ error: 'AI returned an empty response.' });
+    }
+    
     // The response.text is a string containing JSON, so we parse it before sending.
-    const jsonData = JSON.parse(response.text);
+    const jsonData = JSON.parse(text);
     return res.status(200).json(jsonData);
 
   } catch (error: any) {
