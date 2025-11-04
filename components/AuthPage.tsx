@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 
 interface AuthPageProps {
@@ -140,7 +141,7 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onAdminLoginSuccess
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg">
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-dark-card shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
-            <h1 className="text-3xl font-bold text-center mb-6 font-exo2 uppercase tracking-wider text-black dark:text-white">{showVerification ? 'Verificação de E-mail' : 'Simplifika Post'}</h1>
+            <h1 className="text-3xl font-bold text-center mb-6 font-exo2 uppercase tracking-wider text-[#676465] dark:text-white">{showVerification ? 'Verificação de E-mail' : 'Simplifika Post'}</h1>
             {showVerification ? renderVerification() : renderForm()}
         </div>
         <p className="text-center text-gray-500 text-xs">
