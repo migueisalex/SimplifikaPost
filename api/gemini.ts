@@ -6,6 +6,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error('API key not configured on the server.');
+    return res.status(500).json({ error: 'API key not configured on the server.' });
+  }
+
   const { prompt, type } = req.body;
 
   if (!prompt || !type) {
@@ -13,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     let responseSchema;
     if (type === 'suggestions') {
