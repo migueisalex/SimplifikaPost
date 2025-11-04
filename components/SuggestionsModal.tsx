@@ -24,7 +24,8 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+          // Fix: Corrected API key access to use process.env.API_KEY as per coding guidelines.
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           
           const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
 

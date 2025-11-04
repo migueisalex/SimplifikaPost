@@ -36,7 +36,8 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
       setSuggestedHashtags([]);
 
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+        // Fix: Corrected API key access to use process.env.API_KEY as per coding guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Baseado no seguinte texto de um post para redes sociais, gere 4 conjuntos distintos de hashtags otimizadas para engajamento. Cada conjunto deve ser uma única string de texto, com hashtags separadas por espaço. O texto é: "${postContent}"`;
         
         const response = await ai.models.generateContent({
