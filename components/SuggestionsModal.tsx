@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
+// import { GoogleGenAI, Type } from "@google/genai"; // Passo 1: Desativado temporariamente
 import { Suggestion } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 import GeminiIcon from './GeminiIcon';
@@ -23,46 +23,11 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setError(null);
         setSuggestions([]);
 
-        try {
-          // Fix: Corrected API key access to use process.env.API_KEY as per coding guidelines.
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-          
-          const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
-
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: {
-                      type: Type.STRING,
-                      description: 'Um título criativo e curto para a sugestão de copy.',
-                    },
-                    copy: {
-                      type: Type.STRING,
-                      description: 'A sugestão de copy reescrita de forma profissional, sem hashtags.',
-                    },
-                  },
-                  required: ["title", "copy"],
-                },
-              },
-            },
-          });
-          
-          const parsedSuggestions = JSON.parse(response.text);
-          setSuggestions(parsedSuggestions);
-
-        } catch (e) {
-          console.error("Erro ao buscar sugestões:", e);
-          setError("Não foi possível gerar sugestões. Tente novamente mais tarde.");
-        } finally {
-          setIsLoading(false);
-        }
+        // Passo 1: A chamada à API foi desativada temporariamente.
+        // Ela será reativada de forma segura no Passo 3.
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simula um delay
+        setError("A IA está sendo configurada. Esta funcionalidade será ativada em breve.");
+        setIsLoading(false);
       };
 
       fetchSuggestions();
