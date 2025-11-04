@@ -8,6 +8,8 @@ import GeminiIcon from './GeminiIcon';
 import Tooltip from './Tooltip';
 import SuggestionsModal from './SuggestionsModal';
 import HashtagModal from './HashtagModal';
+import ImageGenerationModal from './ImageGenerationModal';
+import LoadingSpinner from './LoadingSpinner';
 
 interface PostModalProps {
   post: Post | null;
@@ -58,6 +60,8 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
   const [error, setError] = useState<string | null>(null);
   const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
   const [isHashtagModalOpen, setIsHashtagModalOpen] = useState(false);
+  const [isImageGenerationModalOpen, setIsImageGenerationModalOpen] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [textForAISuggestion, setTextForAISuggestion] = useState('');
   const [aiHashtagsApplied, setAiHashtagsApplied] = useState(false);
 
@@ -283,6 +287,28 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
     setIsHashtagModalOpen(false);
   };
 
+  const handleImageGenerated = async (base64Data: string, mimeType: string) => {
+    setIsImageGenerationModalOpen(false);
+    setIsGeneratingImage(true);
+    try {
+        const url = `data:${mimeType};base64,${base64Data}`;
+        const needsCrop = await checkImageNeedsCrop(url, postAspectRatio);
+        const newItem: MediaItem = {
+            id: crypto.randomUUID(),
+            url,
+            originalUrl: url,
+            type: mimeType,
+            aspectRatio: postAspectRatio,
+            needsCrop,
+        };
+        setMedia(prev => [...prev, newItem]);
+    } catch (e) {
+        setError("Erro ao processar a imagem gerada.");
+    } finally {
+        setIsGeneratingImage(false);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" onClick={onClose}>
@@ -295,14 +321,19 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             {/* Left Column: Media */}
             <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg flex flex-col gap-4">
               <h3 className="font-bold text-gray-700 dark:text-gray-200">Mídia</h3>
-               {media.length > 0 ? (
+               {isGeneratingImage ? (
+                  <div className="flex-grow flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-dark-border rounded-lg text-center p-4">
+                      <LoadingSpinner />
+                      <p className="text-gray-500 mt-2 animate-pulse">Gerando sua imagem com IA...</p>
+                  </div>
+               ) : media.length > 0 ? (
                  <CarouselPreview media={media} aspectRatio={postAspectRatio} onEdit={handleEditMedia} onRemove={removeMediaItem} />
                ) : (
                 <div className="flex-grow flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-dark-border rounded-lg text-center p-4">
                     <p className="text-gray-500">Arraste e solte ou clique para adicionar imagens e vídeos.</p>
                 </div>
                )}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex flex-col gap-2">
                  <input
                   type="file"
                   id="file-upload"
@@ -314,6 +345,14 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                 <label htmlFor="file-upload" className="w-full text-center cursor-pointer bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-4 rounded-lg block">
                   Adicionar Mídia
                 </label>
+                <button 
+                    type="button" 
+                    onClick={() => setIsImageGenerationModalOpen(true)}
+                    className="w-full text-center cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2"
+                >
+                    <GeminiIcon className="w-5 h-5" />
+                    Gerar Imagem com IA
+                </button>
               </div>
             </div>
 
@@ -466,6 +505,14 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             onApplyAIHashtags={handleApplyAIHashtags}
             aiHashtagsApplied={aiHashtagsApplied}
           />
+      )}
+
+      {isImageGenerationModalOpen && (
+        <ImageGenerationModal
+            isOpen={isImageGenerationModalOpen}
+            onClose={() => setIsImageGenerationModalOpen(false)}
+            onGenerate={handleImageGenerated}
+        />
       )}
     </>
   );
