@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HashtagGroup } from '../types';
+import { GoogleGenAI, Type } from "@google/genai";
 import LoadingSpinner from './LoadingSpinner';
 
 interface HashtagModalProps {
@@ -35,32 +36,38 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
       setSuggestedHashtags([]);
 
       try {
+        // Fix: Corrected API key access to use process.env.API_KEY as per coding guidelines.
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `Baseado no seguinte texto de um post para redes sociais, gere 4 conjuntos distintos de hashtags otimizadas para engajamento. Cada conjunto deve ser uma única string de texto, com hashtags separadas por espaço. O texto é: "${postContent}"`;
         
-        const apiResponse = await fetch('/api/gemini', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ prompt, type: 'hashtags' }),
+        const response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                suggestions: {
+                  type: Type.ARRAY,
+                  description: "Uma lista de 4 strings, onde cada string contém um grupo de hashtags relevantes.",
+                  items: { type: Type.STRING }
+                }
+              }
+            }
+          }
         });
-
-        if (!apiResponse.ok) {
-          const errorData = await apiResponse.json();
-          throw new Error(errorData.error || 'Falha na comunicação com o servidor.');
-        }
-
-        const result = await apiResponse.json();
-
+        
+        const result = JSON.parse(response.text);
         if (result.suggestions && Array.isArray(result.suggestions)) {
           setSuggestedHashtags(result.suggestions);
         } else {
           throw new Error("Resposta da IA em formato inesperado.");
         }
 
-      } catch (e: any) {
+      } catch (e) {
         console.error("Erro ao buscar sugestões de hashtags:", e);
-        setAiError(e.message || "Não foi possível gerar sugestões. Tente novamente.");
+        setAiError("Não foi possível gerar sugestões. Tente novamente.");
       } finally {
         setIsLoading(false);
       }
