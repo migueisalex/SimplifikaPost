@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoogleGenAI, Modality } from "@google/genai";
+// import { GoogleGenAI, Modality } from "@google/genai"; // Removido para usar a API segura
 import LoadingSpinner from './LoadingSpinner';
 import GeminiIcon from './GeminiIcon';
 
@@ -24,25 +24,22 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-          parts: [{ text: prompt }],
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        config: {
-          responseModalities: [Modality.IMAGE],
-        },
+        body: JSON.stringify({ prompt }),
       });
 
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          await onGenerate(part.inlineData.data, part.inlineData.mimeType);
-          onClose(); // Close modal on success
-          return;
-        }
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.details || data.error || "Erro desconhecido ao gerar imagem.");
       }
-      throw new Error("Nenhuma imagem foi retornada pela API.");
+
+      await onGenerate(data.base64Data, data.mimeType);
+      onClose(); // Close modal on success
 
     } catch (e) {
       console.error("Erro ao gerar imagem:", e);
