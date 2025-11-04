@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleGenAI, Type } from "@google/genai";
 import { Suggestion } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 import GeminiIcon from './GeminiIcon';
@@ -24,38 +23,31 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          // Fix: Corrected API key access to use process.env.API_KEY as per coding guidelines.
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-          
           const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
 
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-              responseMimeType: "application/json",
-              responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: {
-                      type: Type.STRING,
-                      description: 'Um título criativo e curto para a sugestão de copy.',
-                    },
-                    copy: {
-                      type: Type.STRING,
-                      description: 'A sugestão de copy reescrita de forma profissional, sem hashtags.',
-                    },
-                  },
-                  required: ["title", "copy"],
-                },
-              },
+          const apiResponse = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              type: 'suggestions',
+              prompt: prompt,
+            }),
           });
+      
+          if (!apiResponse.ok) {
+              throw new Error(`API error: ${apiResponse.statusText}`);
+          }
+      
+          const data = await apiResponse.json();
           
-          const parsedSuggestions = JSON.parse(response.text);
-          setSuggestions(parsedSuggestions);
+          if (data.result) {
+              const parsedSuggestions = JSON.parse(data.result);
+              setSuggestions(parsedSuggestions);
+          } else {
+              throw new Error("Resposta da API em formato inesperado.");
+          }
 
         } catch (e) {
           console.error("Erro ao buscar sugestões:", e);
