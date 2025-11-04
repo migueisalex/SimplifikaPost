@@ -48,9 +48,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await model.generateContent(prompt);
     const response = result.response;
     const generatedText = response.text();
+    
+    // O Gemini 2.0 Flash retorna o JSON como uma string dentro do texto.
+    // Precisamos extrair e fazer o parse.
+    const jsonMatch = generatedText.match(/```json\n([\s\S]*?)\n```/);
+    let jsonString = generatedText;
 
+    if (jsonMatch && jsonMatch[1]) {
+        jsonString = jsonMatch[1];
+    }
+    
     // Parse do JSON retornado
-    const data = JSON.parse(generatedText);
+    const data = JSON.parse(jsonString);
 
     return res.status(200).json(data);
   } catch (error: any) {
