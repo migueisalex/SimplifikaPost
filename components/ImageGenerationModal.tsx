@@ -43,9 +43,17 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
       await onGenerate(data.base64Data, data.mimeType);
       onClose(); // Close modal on success
 
-    } catch (e) {
+    } catch (e: any) {
       console.error("Erro ao gerar imagem:", e);
-      setError("Não foi possível gerar a imagem. Verifique o prompt ou tente novamente.");
+      
+      let friendlyError = "Não foi possível gerar a imagem. Verifique o prompt ou tente novamente.";
+      
+      // Lógica para tratar o erro 429 (Quota Exceeded)
+      if (e.message && e.message.includes('429')) {
+          friendlyError = "Os créditos diários para geração de imagem terminaram, tente novamente amanhã!";
+      }
+      
+      setError(friendlyError);
     } finally {
       setIsLoading(false);
     }
