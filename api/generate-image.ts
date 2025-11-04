@@ -23,12 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const genAI = new GoogleGenerativeAI(apiKey);
     
     // Usar o modelo de geração de imagens
-    const response = await genAI.models.generateContent({
-        model: 'gemini-2.5-flash-image',
+    // O modelo de imagem é acessado via getGenerativeModel
+    const imageModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+
+    const response = await imageModel.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: {
-            // Não é necessário configurar responseModalities, o SDK lida com isso
-        },
     });
 
     // Extrair a imagem em base64 e o mimeType
