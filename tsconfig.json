@@ -15,5 +15,5 @@
     "noEmit": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "api"]
+  "exclude": ["node_modules"]
 }
