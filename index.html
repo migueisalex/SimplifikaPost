@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simplifika Post</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#4e87b8',
+              'brand-secondary': '#42739e',
+              'brand-light': '#f0f5fa',
+              'dark-bg': '#111827',
+              'dark-card': '#1F2937',
+              'dark-border': '#374151',
+            },
+            fontFamily: {
+              'exo2': ['"Exo 2"', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 0.5rem;
+        background-color: #e5e7eb; /* bg-gray-200 */
+        border-radius: 9999px;
+      }
+      .dark input[type="range"]::-webkit-slider-runnable-track {
+        background-color: #374151; /* dark:bg-gray-700 */
+      }
+      input[type="range"]::-moz-range-track {
+        height: 0.5rem;
+        background-color: #e5e7eb;
+        border-radius: 9999px;
+      }
+      .dark input[type="range"]::-moz-range-track {
+        background-color: #374151;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        margin-top: -4px;
+        width: 1.25rem; /* w-5 */
+        height: 1.25rem; /* h-5 */
+        border-radius: 9999px;
+        background-color: var(--thumb-color, #a1a1aa); /* default gray */
+        border: 2px solid white;
+        transition: background-color 150ms ease-in-out;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        background-color: var(--thumb-color, #a1a1aa);
+        border: 2px solid white;
+        transition: background-color 150ms ease-in-out;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-100 dark:bg-dark-bg">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
