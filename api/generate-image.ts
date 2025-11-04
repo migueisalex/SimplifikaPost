@@ -48,7 +48,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Erro ao gerar imagem:', error);
+    // Retorna o erro detalhado para o frontend para debug
     return res.status(500).json({ 
+      success: false,
       error: 'Erro ao gerar imagem',
       details: error.message 
     });
