@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     // Extrair a imagem em base64 e o mimeType
-    const imagePart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    const imagePart = response.response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
 
     if (!imagePart || !imagePart.inlineData) {
         throw new Error("Nenhuma imagem foi retornada pela API.");
