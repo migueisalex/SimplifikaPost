@@ -6,6 +6,20 @@ interface CalendarViewProps {
   onSelectPost: (post: Post) => void;
 }
 
+const getPostIcon = (post: Post) => {
+    const firstMedia = post.media?.[0];
+    const baseClasses = "w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400";
+
+    if (firstMedia?.type.startsWith('image/')) {
+        return <svg xmlns="http://www.w3.org/2000/svg" className={baseClasses} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>;
+    }
+    if (firstMedia?.type.startsWith('video/')) {
+        return <svg xmlns="http://www.w3.org/2000/svg" className={baseClasses} viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 001.553.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>;
+    }
+    return <svg xmlns="http://www.w3.org/2000/svg" className={baseClasses} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>;
+};
+
+
 const CalendarView: React.FC<CalendarViewProps> = ({ posts, onSelectPost }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [hoveredPost, setHoveredPost] = useState<{ post: Post; rect: DOMRect } | null>(null);
@@ -107,36 +121,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({ posts, onSelectPost }) => {
           return (
             <div
               key={i}
-              className={`relative p-1 sm:p-2 border-t dark:border-dark-border h-20 sm:h-32 flex flex-col ${isCurrentMonth ? 'bg-white dark:bg-dark-card' : 'bg-gray-50 dark:bg-gray-800'}`}
+              className={`relative p-1 sm:p-2 border-t dark:border-dark-border min-h-[5rem] sm:min-h-[8rem] ${isCurrentMonth ? 'bg-white dark:bg-dark-card' : 'bg-gray-50 dark:bg-gray-800'}`}
             >
               <div className={`absolute top-1 right-1 text-xs sm:text-sm font-medium ${isToday ? 'bg-brand-primary text-white rounded-full h-6 w-6 flex items-center justify-center' : ''} ${!isCurrentMonth ? 'text-gray-400' : ''}`}>
                 {d.getDate()}
               </div>
-              <div className="w-full h-full flex items-center justify-center">
-                {postsForDay.length > 0 && (() => {
-                    const firstPost = postsForDay[0];
-                    const firstMedia = firstPost.media[0];
-                    let icon = (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 dark:text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
-                    ); // Default text icon
-
-                    if (firstMedia?.type.startsWith('image/')) {
-                        icon = <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 dark:text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>;
-                    } else if (firstMedia?.type.startsWith('video/')) {
-                        icon = <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 dark:text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 001.553.832l3-2a1 1 0 000-1.664l-3-2z" /></svg>;
-                    }
-                    
-                    return (
-                        <div
-                            onClick={() => onSelectPost(firstPost)}
-                            onMouseEnter={(e) => handleMouseEnter(e, firstPost)}
-                            onMouseLeave={handleMouseLeave}
-                            className="w-full h-full flex items-center justify-center rounded-md hover:bg-gray-100 dark:hover:bg-dark-border cursor-pointer transition-colors"
-                        >
-                            {icon}
-                        </div>
-                    );
-                })()}
+              <div className="pt-6 flex flex-wrap content-start gap-1 sm:gap-2">
+                {postsForDay.map(post => (
+                    <div
+                        key={post.id}
+                        onClick={() => onSelectPost(post)}
+                        onMouseEnter={(e) => handleMouseEnter(e, post)}
+                        onMouseLeave={handleMouseLeave}
+                        className="w-[calc(50%-0.125rem)] sm:w-[calc(50%-0.25rem)] aspect-square flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-dark-border cursor-pointer transition-colors"
+                        role="button"
+                        aria-label={`Ver post de ${new Date(post.scheduledAt).toLocaleTimeString('pt-BR', {timeStyle: 'short'})}`}
+                    >
+                        {getPostIcon(post)}
+                    </div>
+                ))}
               </div>
             </div>
           );
