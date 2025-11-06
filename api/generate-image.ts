@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     // Usar o modelo de geração de imagens
     // O modelo de imagem é acessado via getGenerativeModel
-    const imageModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+    const imageModel = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' });
 
     const response = await imageModel.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
