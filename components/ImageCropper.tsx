@@ -28,6 +28,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageSrc, aspectRatio, onSa
   const getAspectRatioLabel = () => {
       if (aspectRatio === 1) return '1:1 (Quadrado)';
       if (Math.abs(aspectRatio - 4/5) < 0.01) return '4:5 (Retrato)';
+      if (Math.abs(aspectRatio - 16/9) < 0.01) return '16:9 (Horizontal)';
       if (Math.abs(aspectRatio - 3/4) < 0.01) return '3:4 (Retrato)';
       if (Math.abs(aspectRatio - 9/16) < 0.01) return '9:16 (Vertical)';
       return 'Personalizado';
