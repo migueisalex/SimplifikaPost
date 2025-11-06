@@ -9,6 +9,7 @@ import Tooltip from './Tooltip';
 import SuggestionsModal from './SuggestionsModal';
 import HashtagModal from './HashtagModal';
 import ImageGenerationModal from './ImageGenerationModal';
+import DeleteHashtagGroupModal from './DeleteHashtagGroupModal';
 import LoadingSpinner from './LoadingSpinner';
 
 interface PostModalProps {
@@ -19,6 +20,8 @@ interface PostModalProps {
   onConnectPlatform: (platform: Platform) => void;
   hashtagGroups: HashtagGroup[];
   onSaveHashtagGroup: (group: Omit<HashtagGroup, 'id'>) => boolean;
+  onOpenDeleteGroupModal: () => void;
+  onDeleteHashtagGroup: (id: string) => void;
 }
 
 const appendHashtags = (currentContent: string, newHashtags: string): string => {
@@ -45,7 +48,7 @@ const appendHashtags = (currentContent: string, newHashtags: string): string => 
 };
 
 
-const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup }) => {
+const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal }) => {
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -61,6 +64,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
   const [isSuggestionsModalOpen, setIsSuggestionsModalOpen] = useState(false);
   const [isHashtagModalOpen, setIsHashtagModalOpen] = useState(false);
   const [isImageGenerationModalOpen, setIsImageGenerationModalOpen] = useState(false);
+  const [isDeleteHashtagModalOpen, setIsDeleteHashtagModalOpen] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [textForAISuggestion, setTextForAISuggestion] = useState('');
   const [aiHashtagsApplied, setAiHashtagsApplied] = useState(false);
@@ -420,7 +424,16 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
               </div>
 
               <div>
-                <label className="font-bold text-gray-700 dark:text-gray-200">Grupos de Hashtags</label>
+                    <div className="flex justify-between items-center w-full">
+                        <label className="font-bold text-gray-700 dark:text-gray-200">Grupos de Hashtags</label>
+                        <button
+                            type="button"
+                            onClick={onOpenDeleteGroupModal}
+                            className="text-sm text-red-500 hover:text-red-700 font-semibold px-2 py-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                            Excluir
+                        </button>
+                    </div>
                  <div className="flex gap-2 mt-1">
                      <select 
                         onChange={(e) => {
@@ -436,7 +449,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                         ))}
                     </select>
                     <button type="button" onClick={() => setIsHashtagModalOpen(true)} className="py-2 px-4 bg-gray-200 dark:bg-dark-border font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition text-sm">
-                        Gerenciar
+                        Criar Grupo +IA
                     </button>
                  </div>
               </div>

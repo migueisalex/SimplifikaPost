@@ -10,6 +10,7 @@ import PostDetailModal from './components/PostDetailModal';
 import ConfirmationModal from './components/ConfirmationModal';
 import ProfileModal from './components/ProfileModal';
 import AdminPanel from './components/admin/AdminPanel';
+import DeleteHashtagGroupModal from './components/DeleteHashtagGroupModal';
 
 
 const App: React.FC = () => {
@@ -21,6 +22,9 @@ const App: React.FC = () => {
   const [viewingPost, setViewingPost] = useState<Post | null>(null);
   const [postToDeleteId, setPostToDeleteId] = useState<string | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false);
+  const [groupToDeleteId, setGroupToDeleteId] = useState<string | null>(null);
   
   const [isAuthenticated, setIsAuthenticated] = useLocalStorage('social-scheduler-auth', false);
   const [isAdmin, setIsAdmin] = useLocalStorage('social-scheduler-is-admin', false);
@@ -73,6 +77,11 @@ const App: React.FC = () => {
   const handleDeletePost = (id: string) => {
     setPostToDeleteId(id);
   };
+  
+  const handleDeleteHashtagGroup = (id: string) => {
+    setIsDeleteGroupModalOpen(false); // Close list modal
+    setGroupToDeleteId(id); // Set ID to trigger confirmation modal
+  };
 
   const handleClonePost = useCallback((postToClone: Post) => {
     const clonedPost = {
@@ -106,6 +115,13 @@ const App: React.FC = () => {
         setViewingPost(null);
       }
       setPostToDeleteId(null);
+    }
+  };
+  
+  const handleConfirmDeleteGroup = () => {
+    if (groupToDeleteId) {
+      setHashtagGroups(prevGroups => prevGroups.filter((g) => g.id !== groupToDeleteId));
+      setGroupToDeleteId(null);
     }
   };
 
@@ -223,6 +239,7 @@ const App: React.FC = () => {
           }}
           hashtagGroups={hashtagGroups}
           onSaveHashtagGroup={handleSaveHashtagGroup}
+          onOpenDeleteGroupModal={() => setIsDeleteGroupModalOpen(true)}
         />
       )}
       
@@ -236,12 +253,30 @@ const App: React.FC = () => {
         />
       )}
 
+      {isDeleteGroupModalOpen && (
+        <DeleteHashtagGroupModal
+          isOpen={isDeleteGroupModalOpen}
+          onClose={() => setIsDeleteGroupModalOpen(false)}
+          hashtagGroups={hashtagGroups}
+          onDelete={handleDeleteHashtagGroup}
+        />
+      )}
+
       <ConfirmationModal
         isOpen={postToDeleteId !== null}
         onClose={() => setPostToDeleteId(null)}
         onConfirm={handleConfirmDelete}
         title="Excluir Post"
         message="Você tem certeza que deseja excluir este post? Esta ação não pode ser desfeita."
+        confirmButtonText="Excluir Definitivamente"
+      />
+
+      <ConfirmationModal
+        isOpen={groupToDeleteId !== null}
+        onClose={() => setGroupToDeleteId(null)}
+        onConfirm={handleConfirmDeleteGroup}
+        title="Excluir Grupo de Hashtags"
+        message="Você tem certeza que deseja excluir este grupo de hashtags? Esta ação não pode ser desfeita."
         confirmButtonText="Excluir Definitivamente"
       />
 
