@@ -22,26 +22,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Inicializar o cliente Gemini
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Usar o modelo de geração de imagens
-    // O modelo de imagem é acessado via getGenerativeModel
-    const imageModel = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-002' });
-
-    const response = await imageModel.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+    // Usar o método generateImages para o modelo Imagen
+    const imageResponse = await genAI.models.generateImages({
+        model: 'imagen-3.0-generate-002',
+        prompt: prompt,
+        config: {
+            numberOfImages: 1,
+            outputMimeType: 'image/jpeg',
+            aspectRatio: '1:1', // Padrão para posts de feed
+        }
     });
 
     // Extrair a imagem em base64 e o mimeType
-    const imagePart = response.response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    const generatedImage = imageResponse.generatedImages[0];
+    const base64Data = generatedImage.image.imageBytes;
+    const mimeType = generatedImage.image.mimeType;
 
-    if (!imagePart || !imagePart.inlineData) {
+    if (!base64Data || !mimeType) {
         throw new Error("Nenhuma imagem foi retornada pela API.");
     }
 
-    const { data, mimeType } = imagePart.inlineData;
-
     return res.status(200).json({
         success: true,
-        base64Data: data,
+        base64Data: base64Data,
         mimeType: mimeType,
     });
 
