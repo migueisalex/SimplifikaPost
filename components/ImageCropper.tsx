@@ -183,6 +183,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ mediaItem, aspectRatio, onS
     const renderedImage = renderedImageRef.current;
     if (!image || !cropBox || !renderedImage) return;
 
+    // 1. Create a canvas with the original image and apply filters
     const filteredCanvas = document.createElement('canvas');
     filteredCanvas.width = image.naturalWidth;
     filteredCanvas.height = image.naturalHeight;
@@ -190,30 +191,58 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ mediaItem, aspectRatio, onS
     if (!ctxFiltered) return;
     ctxFiltered.filter = generateFilterString();
     ctxFiltered.drawImage(image, 0, 0);
-
+    
+    // 2. Calculate the source crop area from the filtered canvas
     const renderedImageRect = renderedImage.getBoundingClientRect();
     if (renderedImageRect.width === 0 || renderedImageRect.height === 0) return;
-
     const scaleRatioX = filteredCanvas.width / renderedImageRect.width;
     const scaleRatioY = filteredCanvas.height / renderedImageRect.height;
-    
     const cropBoxRect = cropBox.getBoundingClientRect();
-    
     const sourceX = (cropBoxRect.left - renderedImageRect.left) * scaleRatioX;
     const sourceY = (cropBoxRect.top - renderedImageRect.top) * scaleRatioY;
     const sourceWidth = cropBoxRect.width * scaleRatioX;
     const sourceHeight = cropBoxRect.height * scaleRatioY;
 
+    // 3. Determine final output dimensions based on aspect ratio
+    let outputWidth, outputHeight;
+    const ratio = Math.round(aspectRatio * 100) / 100; // Normalize for comparison
+    
+    switch (ratio) {
+        case 1: // 1:1 Square
+            outputWidth = 1080;
+            outputHeight = 1080;
+            break;
+        case 0.8: // 4:5 Portrait
+            outputWidth = 1080;
+            outputHeight = 1350;
+            break;
+        case 0.56: // 9:16 Story/Reels
+            outputWidth = 1080;
+            outputHeight = 1920;
+            break;
+        case 1.78: // 16:9 Landscape
+            outputWidth = 1920;
+            outputHeight = 1080;
+            break;
+        default: // Fallback to a reasonable default
+            outputWidth = Math.min(sourceWidth, 1080);
+            outputHeight = outputWidth / aspectRatio;
+    }
+
+    // 4. Create final canvas and draw the cropped, resized image
     const outputCanvas = document.createElement('canvas');
-    const outputWidth = Math.min(sourceWidth, 1080);
-    const outputHeight = outputWidth / aspectRatio;
     outputCanvas.width = outputWidth;
     outputCanvas.height = outputHeight;
-
     const ctxOutput = outputCanvas.getContext('2d');
     if (!ctxOutput) return;
     
-    ctxOutput.drawImage(filteredCanvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, outputWidth, outputHeight);
+    ctxOutput.drawImage(
+      filteredCanvas,
+      sourceX, sourceY, sourceWidth, sourceHeight, // Source rectangle from filtered image
+      0, 0, outputWidth, outputHeight             // Destination rectangle (the whole output canvas)
+    );
+    
+    // 5. Save the result
     onSave(outputCanvas.toDataURL('image/jpeg', 0.92), edits);
   };
   

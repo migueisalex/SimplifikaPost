@@ -1,41 +1,29 @@
 import { useState, Dispatch, SetStateAction } from 'react';
 import { Post } from '../types';
 
-const MAX_PUBLISHED_POSTS_WITH_MEDIA = 10;
 const NINETY_DAYS_IN_MS = 90 * 24 * 60 * 60 * 1000;
 
 const cleanupOldPosts = (posts: Post[]): Post[] => {
     const now = new Date();
 
-    // Separa os posts por status
-    const scheduledPosts = posts.filter(p => p.status !== 'published');
-    const publishedPosts = posts.filter(p => p.status === 'published');
+    return posts.filter(post => {
+        // Regra 1: Manter sempre todos os posts que ainda não foram publicados.
+        if (post.status === 'scheduled') {
+            return true;
+        }
 
-    // Ordena os posts publicados por data, do mais recente para o mais antigo
-    publishedPosts.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
-
-    const cleanedPublishedPosts = publishedPosts.map((post, index) => {
+        // Regra 2: Para posts publicados, verificar a idade.
         const postDate = new Date(post.scheduledAt);
         const ageInMs = now.getTime() - postDate.getTime();
 
-        // Regra 1: Remove o post completamente se for muito antigo (ex: > 90 dias)
+        // Se o post foi publicado há mais de 90 dias, remove-o completamente (com mídia e tudo).
         if (ageInMs > NINETY_DAYS_IN_MS) {
-            return null; // Será filtrado posteriormente
+            return false;
         }
 
-        // Regra 2: Para posts que não serão deletados, verifica se devemos remover a mídia
-        // Mantemos a mídia para os N posts publicados mais recentes.
-        if (index >= MAX_PUBLISHED_POSTS_WITH_MEDIA && post.media.length > 0) {
-            // Cria uma cópia do post e limpa sua mídia para economizar espaço
-            return { ...post, media: [] };
-        }
-
-        // Mantém o post como está (é recente o suficiente para manter a mídia)
-        return post;
-    }).filter((p): p is Post => p !== null); // Filtra os posts nulos (deletados)
-
-    // Combina os posts agendados com os posts publicados já limpos
-    return [...scheduledPosts, ...cleanedPublishedPosts];
+        // Mantém o post publicado se tiver menos de 90 dias, com toda a sua mídia.
+        return true;
+    });
 };
 
 
