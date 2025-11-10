@@ -243,7 +243,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ mediaItem, aspectRatio, onS
     );
     
     // 5. Save the result
-    onSave(outputCanvas.toDataURL('image/jpeg', 0.92), edits);
+    onSave(outputCanvas.toDataURL('image/jpeg', 0.90), edits);
   };
   
   const handleResetAll = () => {

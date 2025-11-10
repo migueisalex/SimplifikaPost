@@ -10,6 +10,7 @@ import SuggestionsModal from './SuggestionsModal';
 import HashtagModal from './HashtagModal';
 import ImageGenerationModal from './ImageGenerationModal';
 import LoadingSpinner from './LoadingSpinner';
+import LowResolutionAlertModal from './LowResolutionAlertModal';
 
 interface PostModalProps {
   post: Post | null;
@@ -52,6 +53,59 @@ const appendHashtags = (currentContent: string, newHashtags: string): string => 
     }
 };
 
+const optimizeImageForSave = (dataUrl: string, aspectRatio: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Get target dimensions based on the post's aspect ratio
+      let targetWidth, targetHeight;
+      // Normalize aspect ratio to handle floating point inaccuracies
+      const ratio = Math.round(aspectRatio * 100) / 100;
+
+      switch (ratio) {
+        case 1:    targetWidth = 1080; targetHeight = 1080; break;
+        case 0.8:  targetWidth = 1080; targetHeight = 1350; break; // 4:5
+        case 0.56: targetWidth = 1080; targetHeight = 1920; break; // 9:16
+        case 1.78: targetWidth = 1920; targetHeight = 1080; break; // 16:9
+        default: 
+            targetWidth = 1080; 
+            targetHeight = Math.round(1080 / aspectRatio); 
+            break;
+      }
+
+      // If image is already smaller than or equal to target, just convert to JPEG and resolve
+      if (img.width <= targetWidth && img.height <= targetHeight) {
+        const preCanvas = document.createElement('canvas');
+        preCanvas.width = img.width;
+        preCanvas.height = img.height;
+        const preCtx = preCanvas.getContext('2d');
+        if (!preCtx) return reject(new Error('Could not get canvas context'));
+        preCtx.drawImage(img, 0, 0);
+        resolve(preCanvas.toDataURL('image/jpeg', 0.90));
+        return;
+      }
+
+      // If larger, resize it down
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Could not get canvas context'));
+      }
+      
+      // Draw the image onto the canvas, fitting it to the target dimensions
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Always resolve with JPEG at 0.90 quality
+      resolve(canvas.toDataURL('image/jpeg', 0.90));
+    };
+    img.onerror = (err) => reject(err);
+    img.src = dataUrl;
+  });
+};
+
 
 const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount, incrementImageGenerationCount, userApiKey }) => {
   const [content, setContent] = useState('');
@@ -73,6 +127,9 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
   const [textForAISuggestion, setTextForAISuggestion] = useState('');
   const [aiHashtagsApplied, setAiHashtagsApplied] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [lowResAlertData, setLowResAlertData] = useState<{ url: string; mimeType: string } | null>(null);
+  const [imageGenReference, setImageGenReference] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const checkImageNeedsCrop = useCallback((imageUrl: string, targetRatio: number): Promise<boolean> => {
     return new Promise(resolve => {
@@ -84,6 +141,16 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
         img.src = imageUrl;
     });
   }, []);
+  
+  const checkImageIsLowRes = (imageUrl: string): Promise<boolean> => {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+            resolve(img.naturalWidth < 1080);
+        };
+        img.src = imageUrl;
+    });
+  };
 
   const handleAspectRatioChange = useCallback(async (ratio: number) => {
     setPostAspectRatio(ratio);
@@ -173,6 +240,10 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
       setPlatforms((prev) => [...prev, platform]);
     }
   };
+  
+  const addMediaItems = (itemsToAdd: MediaItem[]) => {
+      setMedia(prev => [...prev, ...itemsToAdd]);
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -202,6 +273,15 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
           reader.readAsDataURL(file);
       });
       
+      if (file.type.startsWith('image/')) {
+        const isLowRes = await checkImageIsLowRes(url);
+        if (isLowRes) {
+          setLowResAlertData({ url, mimeType: file.type });
+          // Don't add to media list yet, wait for user decision
+          continue; 
+        }
+      }
+
       let needsCrop = false;
       if (file.type.startsWith('image/')) {
           needsCrop = await checkImageNeedsCrop(url, postAspectRatio);
@@ -217,8 +297,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
       });
     }
     
-    setMedia(prev => [...prev, ...newMediaItems]);
-
+    addMediaItems(newMediaItems);
     e.target.value = ''; // Reset input
   };
   
@@ -262,7 +341,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
     }
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     setError(null);
     if (platforms.length === 0) {
       setError('Selecione pelo menos uma plataforma.');
@@ -281,18 +360,38 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
         return;
     }
 
-    const scheduledAt = new Date(`${scheduledDate}T${scheduledHour}:${scheduledMinute}:00`).toISOString();
+    setIsSaving(true);
+    try {
+        const optimizedMedia = await Promise.all(
+          media.map(async (item) => {
+            if (item.type.startsWith('image/')) {
+              // Otimiza a imagem para as dimensões e formato corretos para evitar problemas de localStorage
+              const optimizedUrl = await optimizeImageForSave(item.url, item.aspectRatio);
+              const optimizedOriginalUrl = item.url === item.originalUrl ? optimizedUrl : await optimizeImageForSave(item.originalUrl, item.aspectRatio);
+              return { ...item, url: optimizedUrl, originalUrl: optimizedOriginalUrl };
+            }
+            return item; // Retorna vídeos e outros tipos de mídia como estão
+          })
+        );
 
-    const newPost: Post = {
-      id: post?.id || crypto.randomUUID(),
-      content,
-      media,
-      platforms,
-      postType,
-      status: 'scheduled',
-      scheduledAt,
-    };
-    onSave(newPost);
+        const scheduledAt = new Date(`${scheduledDate}T${scheduledHour}:${scheduledMinute}:00`).toISOString();
+
+        const newPost: Post = {
+          id: post?.id || crypto.randomUUID(),
+          content,
+          media: optimizedMedia,
+          platforms,
+          postType,
+          status: 'scheduled',
+          scheduledAt,
+        };
+        onSave(newPost);
+    } catch (e) {
+        console.error("Erro ao otimizar imagens:", e);
+        setError("Ocorreu um erro ao processar as imagens.");
+    } finally {
+        setIsSaving(false);
+    }
   };
   
   const handleOpenSuggestions = () => {
@@ -435,6 +534,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                            return;
                         }
                         if (canGenerateImages) {
+                            setImageGenReference(null);
                             setIsImageGenerationModalOpen(true);
                         } else {
                             onUpgradeRequest('ai_image');
@@ -574,8 +674,12 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                 <button onClick={onClose} className="py-2 px-4 bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                     Cancelar
                 </button>
-                <button onClick={handleSaveClick} className="py-2 px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition">
-                    {post ? 'Salvar Alterações' : 'Agendar Post'}
+                <button 
+                  onClick={handleSaveClick} 
+                  disabled={isSaving}
+                  className="py-2 px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition disabled:opacity-70 disabled:cursor-wait"
+                >
+                    {isSaving ? 'Salvando...' : (post ? 'Salvar Alterações' : 'Agendar Post')}
                 </button>
             </div>
           </div>
@@ -630,9 +734,37 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
       {isImageGenerationModalOpen && (
         <ImageGenerationModal
             isOpen={isImageGenerationModalOpen}
-            onClose={() => setIsImageGenerationModalOpen(false)}
+            onClose={() => {
+                setIsImageGenerationModalOpen(false);
+                setImageGenReference(null); // Reset reference on close
+            }}
             onGenerate={handleImageGenerated}
             userApiKey={userApiKey}
+            referenceImageUrl={imageGenReference}
+        />
+      )}
+
+      {lowResAlertData && (
+        <LowResolutionAlertModal
+            onClose={() => setLowResAlertData(null)}
+            onKeep={async () => {
+                const { url, mimeType } = lowResAlertData;
+                const needsCrop = await checkImageNeedsCrop(url, postAspectRatio);
+                addMediaItems([{ 
+                    id: crypto.randomUUID(), 
+                    url, 
+                    originalUrl: url, 
+                    type: mimeType, 
+                    aspectRatio: postAspectRatio,
+                    needsCrop 
+                }]);
+                setLowResAlertData(null);
+            }}
+            onEnhance={() => {
+                setImageGenReference(lowResAlertData.url);
+                setIsImageGenerationModalOpen(true);
+                setLowResAlertData(null);
+            }}
         />
       )}
     </>
