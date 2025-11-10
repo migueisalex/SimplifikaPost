@@ -29,7 +29,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
   const [subscriptionData, setSubscriptionData] = useState<Subscription>({ package: 1, hasAiAddon: false });
   const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '' });
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', { cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: '' });
-  const [subscription, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
+  const [, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
   // CEP states
   const [isCepLoading, setIsCepLoading] = useState(false);

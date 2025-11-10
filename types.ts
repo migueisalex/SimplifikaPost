@@ -50,8 +50,6 @@ export interface UserData {
   fullName: string;
   email: string;
   birthDate: string; // YYYY-MM-DD
-  geminiApiKey?: string;
-  geminiApiKeyTestStatus?: 'idle' | 'testing' | 'success' | 'error';
 }
 
 export interface PaymentData {

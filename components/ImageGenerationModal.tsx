@@ -16,7 +16,7 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError("Por favor, digite um prompt para gerar a imagem.");
+      setError("Por favor, digite um prompt para gerar la imagem.");
       return;
     }
 
@@ -24,7 +24,7 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
     setError(null);
 
     try {
-      // FIX: Use process.env.API_KEY as per the coding guidelines.
+      // FIX: Use process.env.API_KEY as per the guidelines.
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -36,11 +36,14 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
         },
       });
 
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          await onGenerate(part.inlineData.data, part.inlineData.mimeType);
-          onClose(); // Close modal on success
-          return;
+      const parts = response.candidates?.[0]?.content?.parts;
+      if (parts) {
+        for (const part of parts) {
+          if (part.inlineData?.data && part.inlineData.mimeType) {
+            await onGenerate(part.inlineData.data, part.inlineData.mimeType);
+            onClose(); // Close modal on success
+            return;
+          }
         }
       }
       throw new Error("Nenhuma imagem foi retornada pela API.");

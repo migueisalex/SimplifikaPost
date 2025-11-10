@@ -43,7 +43,8 @@ const CardIcon = () => (
 
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPaymentData, initialSubscription, onSave, onClose, isAdmin = false, onUpgradePlan }) => {
-  const [activeTab, setActiveTab] = useState<'data' | 'payment' | 'subscription' | 'api'>('data');
+  // FIX: Removed 'api' tab and related state to comply with guidelines prohibiting user-managed API keys.
+  const [activeTab, setActiveTab] = useState<'data' | 'payment' | 'subscription'>('data');
   const [formData, setFormData] = useState<UserData>(initialUserData);
   const [paymentFormData, setPaymentFormData] = useState<PaymentData>(initialPaymentData);
   const [subscriptionData, setSubscriptionData] = useState<Subscription>(initialSubscription || { package: 1, hasAiAddon: false });
@@ -57,11 +58,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
 
   const [isCepLoading, setIsCepLoading] = useState(false);
   const [cepError, setCepError] = useState('');
-
-  const [geminiApiKey, setGeminiApiKey] = useState(initialUserData.geminiApiKey || '');
-  const [apiKeyStatus, setApiKeyStatus] = useState(initialUserData.geminiApiKeyTestStatus || 'idle');
-  const [isTesting, setIsTesting] = useState(false);
-
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -120,23 +116,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
     }
   };
   
-  const handleTestApiKey = async () => {
-    if (!geminiApiKey.trim()) return;
-    setIsTesting(true);
-    setApiKeyStatus('testing');
-    try {
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey.trim() });
-        // Use a very cheap, simple call to test the key
-        await ai.models.generateContent({ model: "gemini-2.5-flash", contents: "test" });
-        setApiKeyStatus('success');
-    } catch (error) {
-        console.error("API Key test failed:", error);
-        setApiKeyStatus('error');
-    } finally {
-        setIsTesting(false);
-    }
-  };
-
   const handleSave = () => {
     setPasswordError('');
     if (showPasswordFields) {
@@ -158,8 +137,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
         alert('Senha alterada com sucesso! (Simulação)');
        }
     }
-    const finalUserData = { ...formData, geminiApiKey, geminiApiKeyTestStatus: apiKeyStatus };
-    onSave(finalUserData, paymentFormData, isAdmin ? subscriptionData : undefined);
+    onSave(formData, paymentFormData, isAdmin ? subscriptionData : undefined);
 
     if (isAdmin) {
       setIsEditing(false); // Go back to view mode after saving
@@ -441,52 +419,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
     return isAdmin ? renderAdminSubscriptionTab() : renderUserSubscriptionTab();
   }
 
-  const renderApiTab = () => (
-    <div className="space-y-4">
-        <div className="flex items-center gap-2">
-            <GeminiIcon className="w-6 h-6 text-blue-500" />
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">API Key do Google Gemini</h3>
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-            Para usuários avançados. Insira sua própria chave de API do Google AI Studio para usar sua cota pessoal. 
-            Isso é útil caso você atinja o limite de IA do seu plano Simplifika Post.
-        </p>
-        <div>
-            <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Sua Chave de API</label>
-            <div className="mt-1 flex items-stretch gap-2">
-                <input
-                    type="password"
-                    name="geminiApiKey"
-                    id="geminiApiKey"
-                    value={geminiApiKey}
-                    onChange={e => {
-                        setGeminiApiKey(e.target.value);
-                        setApiKeyStatus('idle'); // Reset status on change
-                    }}
-                    className="flex-grow px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
-                    placeholder="Cole sua chave de API aqui"
-                />
-                <button
-                    type="button"
-                    onClick={handleTestApiKey}
-                    disabled={isTesting || !geminiApiKey.trim()}
-                    className="py-2 px-4 bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50 flex items-center justify-center min-w-[100px]"
-                >
-                    {isTesting ? <LoadingSpinner className="w-5 h-5"/> : 'Testar API'}
-                </button>
-            </div>
-            {apiKeyStatus !== 'idle' && (
-                <div className="mt-2 flex items-center gap-2 text-sm">
-                    {apiKeyStatus === 'success' && <span className="text-green-600 dark:text-green-400 font-semibold">✓ Verificada com sucesso!</span>}
-                    {apiKeyStatus === 'error' && <span className="text-red-600 dark:text-red-400 font-semibold">✗ Falha na verificação. Chave inválida ou sem permissão.</span>}
-                    {apiKeyStatus === 'testing' && <span className="text-gray-500 dark:text-gray-400 font-semibold">Testando...</span>}
-                </div>
-            )}
-        </div>
-    </div>
-  );
-
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" onClick={onClose}>
       <div className="bg-white dark:bg-dark-card rounded-lg shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -516,21 +448,12 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
           >
             {isAdmin ? 'Plano e Permissões' : 'Meu Plano'}
           </button>
-           { (initialSubscription?.package === 2 || initialSubscription?.package === 3) && !isAdmin && (
-                <button
-                    onClick={() => setActiveTab('api')}
-                    className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'api' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-border'}`}
-                >
-                    API de IA
-                </button>
-           )}
         </div>
 
         <div className="flex-grow p-6 overflow-y-auto">
           {activeTab === 'data' && renderDataTab()}
           {activeTab === 'payment' && renderPaymentTab()}
           {activeTab === 'subscription' && renderSubscriptionTab()}
-          {activeTab === 'api' && renderApiTab()}
         </div>
         
         {isAdmin && !isEditing && (

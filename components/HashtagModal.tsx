@@ -39,7 +39,7 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
     setSuggestedHashtags([]);
 
     try {
-      // FIX: Use process.env.API_KEY as per the coding guidelines.
+      // FIX: Use process.env.API_KEY as per the guidelines.
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const prompt = `Baseado no seguinte texto de um post para redes sociais, gere 4 conjuntos distintos de hashtags otimizadas para engajamento. Cada conjunto deve ser uma única string de texto, com hashtags separadas por espaço. O texto é: "${postContent}"`;
       
@@ -61,12 +61,16 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
         }
       });
       
-      const result = JSON.parse(response.text);
-      if (result.suggestions && Array.isArray(result.suggestions)) {
-        setSuggestedHashtags(result.suggestions);
-        incrementAiGenerationCount();
+      if (response.text) {
+        const result = JSON.parse(response.text);
+        if (result.suggestions && Array.isArray(result.suggestions)) {
+          setSuggestedHashtags(result.suggestions);
+          incrementAiGenerationCount();
+        } else {
+          throw new Error("Resposta da IA em formato inesperado.");
+        }
       } else {
-        throw new Error("Resposta da IA em formato inesperado.");
+        throw new Error("A resposta da IA estava vazia.");
       }
 
     } catch (e) {

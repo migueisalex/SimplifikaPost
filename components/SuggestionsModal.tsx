@@ -24,7 +24,7 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          // FIX: Use process.env.API_KEY as per the coding guidelines.
+          // FIX: Use process.env.API_KEY as per the guidelines.
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
           
           const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
@@ -54,8 +54,12 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
             },
           });
           
-          const parsedSuggestions = JSON.parse(response.text);
-          setSuggestions(parsedSuggestions);
+          if (response.text) {
+            const parsedSuggestions = JSON.parse(response.text);
+            setSuggestions(parsedSuggestions);
+          } else {
+            throw new Error("A resposta da IA estava vazia.");
+          }
 
         } catch (e) {
           console.error("Erro ao buscar sugestões:", e);

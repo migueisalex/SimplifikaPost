@@ -1,5 +1,5 @@
 import React from 'react';
-import { Post, PostType } from '../types';
+import { Post } from '../types';
 import { PlatformIcons } from './PlatformIcons';
 
 interface ListViewProps {

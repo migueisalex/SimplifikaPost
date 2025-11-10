@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { Client, AlertContact, UserData, PaymentData, Subscription } from '../../types';
 import { initialClients, initialAlertContacts } from '../../data/mockData';
@@ -26,8 +26,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     
     const [contactToDelete, setContactToDelete] = useState<AlertContact | null>(null);
 
-    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData, updatedSubscription: Subscription) => {
-        if (!viewingClient) return;
+    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData, updatedSubscription?: Subscription) => {
+        if (!viewingClient || !updatedSubscription) return;
         
         setClients(prevClients => 
             prevClients.map(client => 

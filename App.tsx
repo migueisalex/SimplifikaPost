@@ -57,7 +57,7 @@ const App: React.FC = () => {
   });
   const [subscription, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
-  const { canCreatePost, canGenerateText, incrementPostCount, incrementAiGenerationCount, isTesterPlan } = useUsageTracker(subscription);
+  const { canCreatePost, canGenerateText, incrementPostCount, incrementAiGenerationCount } = useUsageTracker(subscription);
 
   const handleUpgradeRequest = useCallback((reason: string) => {
     setUpgradeReason(reason);
