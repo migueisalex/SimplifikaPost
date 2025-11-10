@@ -106,26 +106,29 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   }, []);
 
-  const handleSavePost = useCallback((post: Post) => {
+  const handleSavePost = useCallback((postData: Post) => {
     setPosts(prevPosts => {
-      const isEditing = prevPosts.some(p => p.id === post.id);
+      // Verifica se um post com o mesmo ID já existe na lista.
+      const postIndex = prevPosts.findIndex(p => p.id === postData.id);
 
-      if (isEditing) {
-        return prevPosts.map(p => (p.id === post.id ? post : p));
+      if (postIndex > -1) {
+        // ID encontrado: é uma edição.
+        const updatedPosts = [...prevPosts];
+        updatedPosts[postIndex] = postData;
+        return updatedPosts;
       } else {
-        // This is a new post (or a clone)
+        // ID não encontrado: é um novo post (ou um clone).
         if (!canCreatePost) {
           handleUpgradeRequest("post_limit");
-          return prevPosts; // Abort state update if limit is reached
+          return prevPosts; // Retorna o estado anterior sem modificação.
         }
         incrementPostCount();
-        return [...prevPosts, post];
+        return [...prevPosts, postData];
       }
     });
     
-    setView(View.CALENDAR);
     handleCloseModal();
-  }, [canCreatePost, handleCloseModal, handleUpgradeRequest, incrementPostCount, setPosts]);
+  }, [canCreatePost, incrementPostCount, setPosts, handleCloseModal, handleUpgradeRequest]);
   
   const handleSaveHashtagGroup = useCallback((group: Omit<HashtagGroup, 'id'>) => {
     const newGroup = { ...group, id: crypto.randomUUID() };
@@ -150,10 +153,12 @@ const App: React.FC = () => {
 
     const clonedPost = {
       ...postToClone,
-      id: crypto.randomUUID(), // New ID makes it a new post
+      id: crypto.randomUUID(),
       status: 'scheduled' as const,
-      scheduledAt: postToClone.scheduledAt, // Keep original date
     };
+    
+    // Abre o modal com o post clonado. A lógica em handleSavePost
+    // irá tratá-lo como um novo post porque seu ID é novo.
     handleOpenModal(clonedPost);
   }, [canCreatePost, handleUpgradeRequest, handleOpenModal]);
   
