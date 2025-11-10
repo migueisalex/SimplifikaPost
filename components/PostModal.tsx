@@ -27,7 +27,6 @@ interface PostModalProps {
   incrementAiGenerationCount: () => void;
   incrementImageGenerationCount: () => void;
   userApiKey?: string;
-  userApiKeyStatus?: 'untested' | 'valid' | 'invalid';
 }
 
 const appendHashtags = (currentContent: string, newHashtags: string): string => {
@@ -54,7 +53,7 @@ const appendHashtags = (currentContent: string, newHashtags: string): string => 
 };
 
 
-const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount, incrementImageGenerationCount, userApiKey, userApiKeyStatus }) => {
+const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount, incrementImageGenerationCount, userApiKey }) => {
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);

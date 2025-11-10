@@ -370,7 +370,6 @@ const App: React.FC = () => {
             incrementAiGenerationCount={incrementAiGenerationCount}
             incrementImageGenerationCount={incrementImageGenerationCount}
             userApiKey={userData.geminiApiKey}
-            userApiKeyStatus={userData.geminiApiKeyTestStatus}
           />
         )}
         
