@@ -11,6 +11,7 @@ import HashtagModal from './HashtagModal';
 import ImageGenerationModal from './ImageGenerationModal';
 import LoadingSpinner from './LoadingSpinner';
 import LowResolutionAlertModal from './LowResolutionAlertModal';
+import TextEditor from './TextEditor';
 
 interface PostModalProps {
   post: Post | null;
@@ -604,7 +605,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
               )}
                <div>
                 <div className="flex justify-between items-center mb-1">
-                    <label htmlFor="content" className="font-bold text-gray-700 dark:text-gray-200">Descrição</label>
+                    <label className="font-bold text-gray-700 dark:text-gray-200">Descrição</label>
                     <Tooltip text="Transformar texto em copy profissional">
                         <button 
                             type="button"
@@ -615,12 +616,10 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                         </button>
                     </Tooltip>
                 </div>
-                <textarea
-                  id="content"
+                <TextEditor
                   value={content}
-                  onChange={e => setContent(e.target.value)}
+                  onChange={setContent}
                   rows={8}
-                  className="w-full p-2 border border-gray-300 dark:border-dark-border rounded-md bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-brand-secondary focus:border-brand-secondary transition resize-y"
                   placeholder="Escreva sua legenda aqui..."
                 />
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, lazy, Suspense } from 'react';
 import { Post, View, Platform, HashtagGroup, UserData, PaymentData, Subscription } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import usePostsStorage from './hooks/usePostsStorage';
@@ -11,10 +11,12 @@ import ConnectAccountsPage from './components/ConnectAccountsPage';
 import PostDetailModal from './components/PostDetailModal';
 import ConfirmationModal from './components/ConfirmationModal';
 import ProfileModal from './components/ProfileModal';
-import AdminPanel from './components/admin/AdminPanel';
 import DeleteHashtagGroupModal from './components/DeleteHashtagGroupModal';
 import UpgradePage from './components/UpgradePage';
 import UpgradeModal from './components/UpgradeModal';
+import LoadingSpinner from './components/LoadingSpinner';
+
+const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 
 
 const App: React.FC = () => {
@@ -267,7 +269,15 @@ const App: React.FC = () => {
         setIsUpgrading(false);
     }} />;
   } else if (isAdmin) {
-    pageContent = <AdminPanel onLogout={handleLogout} />;
+    pageContent = (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg">
+          <LoadingSpinner />
+        </div>
+      }>
+        <AdminPanel onLogout={handleLogout} />
+      </Suspense>
+    );
   } else if (!isAuthenticated) {
     pageContent = <AuthPage 
         onLoginSuccess={handleLoginSuccess} 

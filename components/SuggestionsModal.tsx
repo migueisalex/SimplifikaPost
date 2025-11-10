@@ -114,7 +114,7 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
                   <h3 className="font-bold text-lg text-brand-primary mb-2">{suggestion.title}</h3>
                   <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 mb-4">{suggestion.copy}</p>
                   <button
-                    onClick={() => onSelectSuggestion(suggestion.copy)}
+                    onClick={() => onSelectSuggestion(`${suggestion.title}\n\n${suggestion.copy}`)}
                     className="w-full sm:w-auto py-2 px-5 text-sm font-bold bg-brand-primary text-white rounded-lg hover:bg-brand-secondary transition shadow"
                   >
                     Usar este texto
