@@ -56,7 +56,7 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
     setError(null);
 
     try {
-      const apiKey = userApiKey || process.env.API_KEY;
+      const apiKey = userApiKey || process.env.GEMINI_API_KEY;
       if (!apiKey) {
         setError("A chave da API de IA não está configurada.");
         setIsLoading(false);

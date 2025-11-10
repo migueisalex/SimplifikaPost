@@ -25,7 +25,7 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          const apiKey = userApiKey || process.env.API_KEY;
+          const apiKey = userApiKey || process.env.GEMINI_API_KEY;
           if (!apiKey) {
             setError("A chave da API de IA não está configurada.");
             setIsLoading(false);
