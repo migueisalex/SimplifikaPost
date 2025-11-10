@@ -106,9 +106,10 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   }, []);
 
-  const handleSavePost = useCallback((postData: Post) => {
+  // Removido useCallback para garantir que a função sempre capture o estado mais recente
+  // de `posts` e `usage`, eliminando a possibilidade de um "stale closure".
+  const handleSavePost = (postData: Post) => {
     setPosts(prevPosts => {
-      // Verifica se um post com o mesmo ID já existe na lista.
       const postIndex = prevPosts.findIndex(p => p.id === postData.id);
 
       if (postIndex > -1) {
@@ -128,7 +129,7 @@ const App: React.FC = () => {
     });
     
     handleCloseModal();
-  }, [canCreatePost, incrementPostCount, setPosts, handleCloseModal, handleUpgradeRequest]);
+  };
   
   const handleSaveHashtagGroup = useCallback((group: Omit<HashtagGroup, 'id'>) => {
     const newGroup = { ...group, id: crypto.randomUUID() };
@@ -145,7 +146,8 @@ const App: React.FC = () => {
     setGroupToDeleteId(id); // Set ID to trigger confirmation modal
   };
 
-  const handleClonePost = useCallback((postToClone: Post) => {
+  // Removido useCallback para garantir que a função sempre capture o estado mais recente.
+  const handleClonePost = (postToClone: Post) => {
     if (!canCreatePost) {
         handleUpgradeRequest("post_limit");
         return;
@@ -160,7 +162,7 @@ const App: React.FC = () => {
     // Abre o modal com o post clonado. A lógica em handleSavePost
     // irá tratá-lo como um novo post porque seu ID é novo.
     handleOpenModal(clonedPost);
-  }, [canCreatePost, handleUpgradeRequest, handleOpenModal]);
+  };
   
   const handleEditPostFromDetail = (post: Post) => {
     setViewingPost(null);
