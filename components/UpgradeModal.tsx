@@ -21,11 +21,11 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, onUpgrade,
     },
     post_limit: { 
         title: "Limite de Posts Atingido", 
-        message: "Você atingiu seu limite de 5 posts/mês do plano Tester. Faça o upgrade para ter posts ilimitados!" 
+        message: "Você atingiu seu limite de 5 posts/mês do plano Freemium. Faça o upgrade para ter posts ilimitados!" 
     },
     ai_text_limit: { 
         title: "Limite de IA Atingido", 
-        message: "Você atingiu seu limite de 4 gerações de texto/dia do plano Tester. Faça o upgrade para ter sugestões ilimitadas!" 
+        message: "Você atingiu seu limite de 20 usos de IA por mês no plano Freemium. Faça o upgrade para ter sugestões ilimitadas!" 
     },
     default: { 
         title: "Recurso Indisponível", 

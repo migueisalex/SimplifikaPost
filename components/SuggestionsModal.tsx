@@ -1,5 +1,3 @@
-// FIX: Add reference to Vite client types to resolve TypeScript error for import.meta.env
-/// <reference types="vite/client" />
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { Suggestion } from '../types';
@@ -11,9 +9,10 @@ interface SuggestionsModalProps {
   onClose: () => void;
   originalText: string;
   onSelectSuggestion: (text: string) => void;
+  userApiKey?: string;
 }
 
-const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, originalText, onSelectSuggestion }) => {
+const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, originalText, onSelectSuggestion, userApiKey }) => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +25,13 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          const apiKey = import.meta.env.GEMINI_API_KEY;
+          const apiKey = userApiKey || process.env.API_KEY;
           if (!apiKey) {
-            setError("A chave da API não foi configurada. Entre em contato com o suporte.");
+            setError("A chave da API de IA não está configurada.");
             setIsLoading(false);
             return;
           }
+          
           const ai = new GoogleGenAI({ apiKey });
           
           const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
@@ -82,7 +82,7 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
 
       fetchSuggestions();
     }
-  }, [isOpen, originalText]);
+  }, [isOpen, originalText, userApiKey]);
 
   if (!isOpen) return null;
 

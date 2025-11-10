@@ -8,13 +8,14 @@ interface SignUpFlowProps {
   onBackToLogin: () => void;
 }
 
-// Fix: Added package tier 0 to satisfy the 'PackageTier' type.
-const packageDetails: Record<PackageTier, { name: string; features: string[] }> = {
-    0: { name: 'Plano Tester', features: ['Instagram', 'Facebook'] },
-    1: { name: 'Pacote 1', features: ['Instagram', 'Facebook'] },
-    2: { name: 'Pacote 2', features: ['Instagram', 'Facebook', 'TikTok'] },
-    3: { name: 'Pacote 3', features: ['Instagram', 'Facebook', 'TikTok', 'YouTube'] },
+const packageDetails: Record<PackageTier, { name: string; price: string; features: string[], description?: string }> = {
+    0: { name: 'Freemium', price: 'Grátis', features: ['Instagram', 'Facebook'], description: '5 posts/mês, 20 IAs de texto/mês, 2 IAs de imagem/mês.' },
+    1: { name: 'Pacote 1', price: 'R$ 29,90/mês', features: ['Instagram', 'Facebook', 'Posts Ilimitados'] },
+    2: { name: 'Pacote 2', price: 'R$ 39,90/mês', features: ['Tudo do Pacote 1', '+ TikTok'] },
+    3: { name: 'Pacote 3', price: 'R$ 99,00/mês', features: ['Tudo do Pacote 2', '+ YouTube'] },
+    4: { name: 'Pacote Pro', price: 'R$ 89,90/mês', features: ['Todos os recursos', 'Gerações de IA ilimitadas'], description: 'Requer sua própria chave de API do Google Gemini.' },
 };
+
 const brazilianStates = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
@@ -70,6 +71,32 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
       onSignUpSuccess(subscriptionData);
   }
 
+  const handleFreemiumSubmit = () => {
+      setError('');
+      if (!accountData.email || !accountData.password) {
+        setError('Ocorreu um erro. Volte e verifique seu email e senha.');
+        setStep(1);
+        return;
+      }
+      
+      localStorage.setItem('social-user-email', accountData.email);
+      
+      setUserData({
+          fullName: 'Usuário Freemium',
+          email: accountData.email,
+          birthDate: '',
+      });
+
+      setPaymentData({
+          cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: ''
+      });
+      
+      const freemiumSubscription = { package: 0 as PackageTier, hasAiAddon: false };
+      setSubscription(freemiumSubscription);
+      
+      onSignUpSuccess(freemiumSubscription);
+  };
+
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
     if (cep.length !== 8) {
@@ -119,24 +146,25 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
       <h2 className="text-2xl font-bold text-center mb-1">Escolha seu Pacote</h2>
       <p className="text-center text-gray-500 mb-6">Selecione o plano que melhor se adapta a você.</p>
       <div className="space-y-4 mb-6">
-        {Object.entries(packageDetails)
-          // Fix: Filtered out the Tester plan (tier 0) so it's not a selectable option for new users.
-          .filter(([tier]) => Number(tier) > 0)
-          .map(([tier, details]) => (
+        {Object.entries(packageDetails).map(([tier, details]) => (
             <label key={tier} className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${subscriptionData.package == Number(tier) ? 'border-brand-primary bg-brand-light dark:bg-brand-primary/10' : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-gray-500'}`}>
-                <input type="radio" name="package" value={tier} checked={subscriptionData.package == Number(tier)} onChange={() => setSubscriptionData(prev => ({...prev, package: Number(tier) as PackageTier}))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
-                <div className="ml-4 text-sm">
-                    <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{details.name}</span>
-                    <p className="text-gray-600 dark:text-gray-400">Postagens para: {details.features.join(', ')}</p>
+                <input type="radio" name="package" value={tier} checked={subscriptionData.package == Number(tier)} onChange={() => setSubscriptionData(prev => ({...prev, package: Number(tier) as PackageTier, hasAiAddon: Number(tier) === 0 ? false : prev.hasAiAddon }))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
+                <div className="ml-4 text-sm flex-grow">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{details.name}</span>
+                      <span className="font-extrabold text-brand-secondary">{details.price}</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">Recursos: {details.features.join(', ')}</p>
+                    {details.description && <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-semibold">{details.description}</p>}
                 </div>
             </label>
         ))}
       </div>
-      <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-        <input type="checkbox" checked={subscriptionData.hasAiAddon} onChange={e => setSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
+      <label className={`flex items-start p-4 border-2 rounded-lg transition-all bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700 ${subscriptionData.package === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+        <input type="checkbox" checked={subscriptionData.hasAiAddon} onChange={e => setSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))} disabled={subscriptionData.package === 0} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
         <div className="ml-4 text-sm">
-            <span className="font-bold text-lg text-blue-900 dark:text-blue-200">Por mais R$9,90 inclua criação de imagens por IA</span>
-            <p className="text-blue-700 dark:text-blue-300">São 60 criações permitidas por mês.</p>
+            <span className="font-bold text-lg text-blue-900 dark:text-blue-200">Por mais R$19,90 inclua criação de imagens por IA</span>
+            <p className="text-blue-700 dark:text-blue-300">São 120 criações permitidas por mês.</p>
         </div>
       </label>
     </div>
@@ -172,6 +200,8 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
     </form>
   );
 
+  const isFreemiumSelected = step === 2 && subscriptionData.package === 0;
+
   return (
     <>
       {step === 1 && renderStep1()}
@@ -187,10 +217,12 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
           <button onClick={onBackToLogin} className="font-bold text-sm text-gray-600 dark:text-gray-300 hover:text-brand-primary">Já tenho uma conta</button>
         )}
         
-        {step < 3 ? (
-          <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
+        {isFreemiumSelected ? (
+            <button onClick={handleFreemiumSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Finalizar Cadastro</button>
+        ) : step < 3 ? (
+            <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
         ) : (
-          <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Finalizar Cadastro</button>
+            <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Finalizar Cadastro</button>
         )}
       </div>
     </>

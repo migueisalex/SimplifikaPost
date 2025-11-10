@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserData, PaymentData, Subscription, PackageTier } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import LoadingSpinner from './LoadingSpinner';
@@ -7,13 +7,14 @@ interface UpgradePageProps {
   onUpgradeSuccess: (newSubscription: Subscription) => void;
 }
 
-// Fix: Added package tier 0 to satisfy the 'PackageTier' type.
-const packageDetails: Record<PackageTier, { name: string; features: string[] }> = {
-    0: { name: 'Plano Tester', features: ['Instagram', 'Facebook'] },
-    1: { name: 'Pacote 1', features: ['Instagram', 'Facebook'] },
-    2: { name: 'Pacote 2', features: ['Instagram', 'Facebook', 'TikTok'] },
-    3: { name: 'Pacote 3', features: ['Instagram', 'Facebook', 'TikTok', 'YouTube'] },
+const packageDetails: Record<PackageTier, { name: string; price: string; features: string[], description?: string }> = {
+    0: { name: 'Freemium', price: 'Grátis', features: ['Instagram', 'Facebook'], description: '5 posts/mês, 20 IAs de texto/mês, 2 IAs de imagem/mês.' },
+    1: { name: 'Pacote 1', price: 'R$ 29,90/mês', features: ['Instagram', 'Facebook', 'Posts Ilimitados'] },
+    2: { name: 'Pacote 2', price: 'R$ 39,90/mês', features: ['Tudo do Pacote 1', '+ TikTok'] },
+    3: { name: 'Pacote 3', price: 'R$ 99,00/mês', features: ['Tudo do Pacote 2', '+ YouTube'] },
+    4: { name: 'Pacote Pro', price: 'R$ 89,90/mês', features: ['Todos os recursos', 'Gerações de IA ilimitadas'], description: 'Requer sua própria chave de API do Google Gemini.' },
 };
+
 const brazilianStates = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
@@ -24,7 +25,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
   const [error, setError] = useState('');
   
   // Data states from localStorage
-  const [userData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '' });
+  const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '' });
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', { cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: '' });
   const [subscription, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
   
@@ -35,6 +36,14 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
   const [isCepLoading, setIsCepLoading] = useState(false);
   const [cepError, setCepError] = useState('');
 
+  useEffect(() => {
+    // If user is coming from Freemium, clear the default name to prompt for a real one.
+    if (userData.fullName === 'Usuário Freemium') {
+      setUserData(prev => ({ ...prev, fullName: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleNextStep = () => {
     setError('');
     setStep(s => s + 1);
@@ -42,8 +51,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
   
   const handleFinalSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      // Basic validation
-      if (!paymentData.cpf || !paymentData.cep || !paymentData.address || !paymentData.number || !paymentData.city || !paymentData.state) {
+      // Basic validation including the full name
+      if (!userData.fullName || !paymentData.cpf || !paymentData.cep || !paymentData.address || !paymentData.number || !paymentData.city || !paymentData.state) {
           setError("Por favor, preencha todos os campos de pagamento obrigatórios.");
           return;
       }
@@ -54,6 +63,13 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
       alert("Plano alterado com sucesso!");
       onUpgradeSuccess(newSubscriptionData);
   }
+
+    const handleDowngradeToFreemium = () => {
+      const freemiumSubscription: Subscription = { package: 0, hasAiAddon: false };
+      setSubscription(freemiumSubscription);
+      alert("Plano alterado para Freemium com sucesso!");
+      onUpgradeSuccess(freemiumSubscription);
+  };
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, '');
@@ -85,24 +101,25 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
       <h2 className="text-2xl font-bold text-center mb-1">Alterar seu Pacote</h2>
       <p className="text-center text-gray-500 mb-6">Selecione o novo plano que melhor se adapta a você.</p>
       <div className="space-y-4 mb-6">
-        {Object.entries(packageDetails)
-            // Fix: Filtered out the Tester plan (tier 0) so it's not a selectable option during an upgrade.
-            .filter(([tier]) => Number(tier) > 0)
-            .map(([tier, details]) => (
+        {Object.entries(packageDetails).map(([tier, details]) => (
             <label key={tier} className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${newSubscriptionData.package == Number(tier) ? 'border-brand-primary bg-brand-light dark:bg-brand-primary/10' : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-gray-500'}`}>
-                <input type="radio" name="package" value={tier} checked={newSubscriptionData.package == Number(tier)} onChange={() => setNewSubscriptionData(prev => ({...prev, package: Number(tier) as PackageTier}))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
-                <div className="ml-4 text-sm">
-                    <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{details.name}</span>
-                    <p className="text-gray-600 dark:text-gray-400">Postagens para: {details.features.join(', ')}</p>
+                <input type="radio" name="package" value={tier} checked={newSubscriptionData.package == Number(tier)} onChange={() => setNewSubscriptionData(prev => ({...prev, package: Number(tier) as PackageTier, hasAiAddon: Number(tier) === 0 ? false : prev.hasAiAddon }))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
+                <div className="ml-4 text-sm flex-grow">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{details.name}</span>
+                      <span className="font-extrabold text-brand-secondary">{details.price}</span>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">Recursos: {details.features.join(', ')}</p>
+                    {details.description && <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-semibold">{details.description}</p>}
                 </div>
             </label>
         ))}
       </div>
-      <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700">
-        <input type="checkbox" checked={newSubscriptionData.hasAiAddon} onChange={e => setNewSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
+      <label className={`flex items-start p-4 border-2 rounded-lg transition-all bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700 ${newSubscriptionData.package === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+        <input type="checkbox" checked={newSubscriptionData.hasAiAddon} onChange={e => setNewSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))} disabled={newSubscriptionData.package === 0} className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5" />
         <div className="ml-4 text-sm">
-            <span className="font-bold text-lg text-blue-900 dark:text-blue-200">Por mais R$9,90 inclua criação de imagens por IA</span>
-            <p className="text-blue-700 dark:text-blue-300">São 60 criações permitidas por mês.</p>
+            <span className="font-bold text-lg text-blue-900 dark:text-blue-200">Por mais R$19,90 inclua criação de imagens por IA</span>
+            <p className="text-blue-700 dark:text-blue-300">São 120 criações permitidas por mês.</p>
         </div>
       </label>
     </div>
@@ -113,7 +130,7 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
       <h2 className="text-2xl font-bold text-center mb-1">Confirmar Pagamento</h2>
       <p className="text-center text-gray-500 mb-6">Confirme seus dados para alterar o plano.</p>
       <div className="space-y-4">
-        <input type="text" placeholder="Nome Completo" value={userData.fullName} disabled className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-800/50 cursor-not-allowed"/>
+        <input type="text" placeholder="Nome Completo" value={userData.fullName} onChange={e => setUserData({ ...userData, fullName: e.target.value })} className="w-full p-2 border rounded" required/>
         <input type="text" placeholder="CPF" value={paymentData.cpf} onChange={e => setPaymentData({...paymentData, cpf: e.target.value})} className="w-full p-2 border rounded" required/>
         <div className="relative">
             <input type="text" placeholder="CEP" value={paymentData.cep} onChange={e => setPaymentData({...paymentData, cep: e.target.value})} onBlur={handleCepBlur} className="w-full p-2 border rounded" required/>
@@ -138,6 +155,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
     </form>
   );
 
+  const isFreemiumSelected = step === 1 && newSubscriptionData.package === 0;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4">
       <div className="w-full max-w-lg">
@@ -153,10 +172,12 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
                 <button onClick={() => onUpgradeSuccess(subscription!)} className="font-bold text-sm text-gray-600 dark:text-gray-300 hover:text-brand-primary">Cancelar</button>
                 )}
                 
-                {step < 2 ? (
-                <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
+                {isFreemiumSelected ? (
+                    <button onClick={handleDowngradeToFreemium} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Confirmar Alteração</button>
+                ) : step < 2 ? (
+                    <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
                 ) : (
-                <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Salvar Alterações</button>
+                    <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Salvar Alterações</button>
                 )}
             </div>
         </div>

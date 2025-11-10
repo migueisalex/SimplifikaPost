@@ -1,5 +1,3 @@
-// FIX: Add reference to Vite client types to resolve TypeScript error for import.meta.env
-/// <reference types="vite/client" />
 import React, { useState } from 'react';
 import { HashtagGroup } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -14,9 +12,10 @@ interface HashtagModalProps {
   canGenerateText: boolean;
   incrementAiGenerationCount: () => void;
   onUpgradeRequest: (reason: string) => void;
+  userApiKey?: string;
 }
 
-const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postContent, onApplyAIHashtags, aiHashtagsApplied, canGenerateText, incrementAiGenerationCount, onUpgradeRequest }) => {
+const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postContent, onApplyAIHashtags, aiHashtagsApplied, canGenerateText, incrementAiGenerationCount, onUpgradeRequest, userApiKey }) => {
   const [name, setName] = useState('');
   const [hashtags, setHashtags] = useState('');
   const [error, setError] = useState('');
@@ -41,12 +40,13 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
     setSuggestedHashtags([]);
 
     try {
-      const apiKey = import.meta.env.GEMINI_API_KEY;
+      const apiKey = userApiKey || process.env.API_KEY;
       if (!apiKey) {
-        setAiError("A chave da API não foi configurada. Entre em contato com o suporte.");
+        setAiError("A chave da API de IA não está configurada.");
         setIsLoading(false);
         return;
       }
+
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `Baseado no seguinte texto de um post para redes sociais, gere 4 conjuntos distintos de hashtags otimizadas para engajamento. Cada conjunto deve ser uma única string de texto, com hashtags separadas por espaço. O texto é: "${postContent}"`;
       

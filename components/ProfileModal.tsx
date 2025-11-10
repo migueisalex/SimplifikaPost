@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { UserData, PaymentData, Subscription, PackageTier } from '../types';
 import LoadingSpinner from './LoadingSpinner';
+import { GoogleGenAI } from '@google/genai';
+import GeminiIcon from './GeminiIcon';
+import { UsageData, POST_LIMIT_FREEMIUM, AI_TEXT_LIMIT_FREEMIUM, IMAGE_LIMIT_FREEMIUM } from '../hooks/useUsageTracker';
 
 interface ProfileModalProps {
   initialUserData: UserData;
   initialPaymentData: PaymentData;
-  initialSubscription?: Subscription;
+  initialSubscription: Subscription;
   onSave: (userData: UserData, paymentData: PaymentData, subscription?: Subscription) => void;
   onClose: () => void;
   onUpgradePlan?: () => void;
   isAdmin?: boolean;
+  usageData?: UsageData;
+  isFreemium?: boolean;
 }
 
 const brazilianStates = [
@@ -18,10 +23,11 @@ const brazilianStates = [
 ];
 
 const packageDetails: Record<PackageTier, { name: string, features: string[]}> = {
-    0: { name: 'Plano Tester', features: ['Instagram', 'Facebook']},
+    0: { name: 'Plano Freemium', features: ['Instagram', 'Facebook']},
     1: { name: 'Pacote 1', features: ['Instagram', 'Facebook']},
     2: { name: 'Pacote 2', features: ['Instagram', 'Facebook', 'TikTok']},
     3: { name: 'Pacote 3', features: ['Instagram', 'Facebook', 'TikTok', 'YouTube']},
+    4: { name: 'Pacote Pro', features: ['Todas as plataformas', 'IA Ilimitada']},
 };
 
 const CardIcon = () => (
@@ -40,12 +46,11 @@ const CardIcon = () => (
 );
 
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPaymentData, initialSubscription, onSave, onClose, isAdmin = false, onUpgradePlan }) => {
-  // FIX: Removed 'api' tab and related state to comply with guidelines prohibiting user-managed API keys.
-  const [activeTab, setActiveTab] = useState<'data' | 'payment' | 'subscription'>('data');
+const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPaymentData, initialSubscription, onSave, onClose, isAdmin = false, onUpgradePlan, usageData, isFreemium }) => {
+  const [activeTab, setActiveTab] = useState<'data' | 'payment' | 'subscription' | 'api'>('data');
   const [formData, setFormData] = useState<UserData>(initialUserData);
   const [paymentFormData, setPaymentFormData] = useState<PaymentData>(initialPaymentData);
-  const [subscriptionData, setSubscriptionData] = useState<Subscription>(initialSubscription || { package: 1, hasAiAddon: false });
+  const [subscriptionData, setSubscriptionData] = useState<Subscription>(initialSubscription);
   
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
@@ -56,6 +61,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
 
   const [isCepLoading, setIsCepLoading] = useState(false);
   const [cepError, setCepError] = useState('');
+
+  const [userApiKey, setUserApiKey] = useState(initialUserData.geminiApiKey || '');
+  const [apiKeyStatus, setApiKeyStatus] = useState(initialUserData.geminiApiKeyTestStatus || 'untested');
+  const [isTestingKey, setIsTestingKey] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -100,7 +109,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
       } else {
         setPaymentFormData(prev => ({
           ...prev,
-          address: data.logradouro,
+          address: data.logouro,
           district: data.bairro,
           city: data.localidade,
           state: data.uf,
@@ -135,13 +144,42 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
         alert('Senha alterada com sucesso! (Simulação)');
        }
     }
-    onSave(formData, paymentFormData, isAdmin ? subscriptionData : undefined);
+    
+    const updatedUserData = { ...formData, geminiApiKey: userApiKey, geminiApiKeyTestStatus: apiKeyStatus };
+    onSave(updatedUserData, paymentFormData, isAdmin ? subscriptionData : undefined);
 
     if (isAdmin) {
       setIsEditing(false); // Go back to view mode after saving
     } else {
       setIsEditingCard(false);
       onClose();
+    }
+  };
+
+  const handleTestApiKey = async () => {
+    if (!userApiKey.trim()) {
+      setApiKeyStatus('invalid');
+      return;
+    }
+    setIsTestingKey(true);
+    setApiKeyStatus('untested');
+    try {
+      const ai = new GoogleGenAI({ apiKey: userApiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: 'say hello',
+      });
+      // Check for a valid text response to confirm the key works
+      if (response.text) {
+        setApiKeyStatus('valid');
+      } else {
+        throw new Error('Empty response from API');
+      }
+    } catch (error) {
+      console.error("API Key Test Failed:", error);
+      setApiKeyStatus('invalid');
+    } finally {
+      setIsTestingKey(false);
     }
   };
 
@@ -364,8 +402,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
                             className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5"
                         />
                         <div className="ml-3 text-sm">
-                            <span className="font-bold text-gray-900 dark:text-gray-100">Pacote {pkgTier}</span>
-                            <p className="text-gray-500 dark:text-gray-400">Plataformas: {packageDetails[pkgTier].features.join(', ')}</p>
+                            <span className="font-bold text-gray-900 dark:text-gray-100">{packageDetails[pkgTier].name}</span>
+                            <p className="text-gray-500 dark:text-gray-400">Recursos: {packageDetails[pkgTier].features.join(', ')}</p>
                         </div>
                     </label>
                 )
@@ -387,16 +425,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
             </div>
             <div className="ml-3 text-sm">
                 <label htmlFor="ai-addon" className={`font-medium text-gray-700 dark:text-gray-300 ${!isEditing ? 'cursor-not-allowed' : ''}`}>Criação de Imagens com IA</label>
-                <p className="text-gray-500 dark:text-gray-400">Permite que o cliente gere até 60 imagens por mês usando IA.</p>
+                <p className="text-gray-500 dark:text-gray-400">Permite que o cliente gere até 120 imagens por mês usando IA.</p>
             </div>
         </div>
     </div>
   );
   
   const renderUserSubscriptionTab = () => (
-    <div className="space-y-6 text-center">
-        <h3 className="text-xl font-bold text-gray-800 dark:text-white">Seu Plano Atual</h3>
-        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-dark-border inline-block shadow-sm">
+    <div className="space-y-6">
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white text-center">Seu Plano Atual</h3>
+        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-dark-border inline-block shadow-sm mx-auto text-center">
             <p className="text-3xl font-bold text-brand-primary mb-2">{packageDetails[subscriptionData.package].name}</p>
             <p className="text-gray-600 dark:text-gray-300">Acesso a: {packageDetails[subscriptionData.package].features.join(', ')}</p>
             {subscriptionData.hasAiAddon && (
@@ -405,7 +443,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
                 </div>
             )}
         </div>
-        <div className="pt-4">
+        
+        {isFreemium && usageData && (
+          <div className="text-center p-4 bg-gray-100 dark:bg-gray-900/50 rounded-lg space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <h4 className="font-bold text-md text-gray-800 dark:text-white mb-3">Seus Limites Mensais</h4>
+            <p>Agendamentos: <span className="font-semibold">{usageData.postsThisMonth} / {POST_LIMIT_FREEMIUM}</span> posts</p>
+            <p>Descrição com IA e Hashtags com IA: <span className="font-semibold">{usageData.aiTextGenerationsThisMonth} / {AI_TEXT_LIMIT_FREEMIUM}</span> usos</p>
+            <p>Criação de imagem com IA: <span className="font-semibold">{usageData.imageGenerationsThisMonth} / {IMAGE_LIMIT_FREEMIUM}</span> por mês</p>
+          </div>
+        )}
+
+        <div className="pt-4 text-center">
             <button onClick={onUpgradePlan} className="py-2 px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition transform hover:scale-105">
                 Alterar Plano
             </button>
@@ -413,9 +461,58 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
     </div>
   );
   
+  const renderApiTab = () => (
+    <div className="space-y-4">
+        <div className="flex items-center gap-2">
+            <GeminiIcon className="w-6 h-6 text-blue-500"/>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Sua Chave de API do Google Gemini</h3>
+        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+            Como assinante do Plano Pro, você pode usar sua própria chave de API para ter acesso ilimitado às funcionalidades de IA.
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-brand-primary font-semibold hover:underline ml-1">
+                Obtenha sua chave aqui.
+            </a>
+        </p>
+        <div>
+            <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Chave de API</label>
+            <div className="mt-1 flex items-stretch gap-2">
+                <input
+                    type="password"
+                    id="geminiApiKey"
+                    value={userApiKey}
+                    onChange={(e) => {
+                        setUserApiKey(e.target.value);
+                        setApiKeyStatus('untested');
+                    }}
+                    disabled={!isEditing}
+                    className="flex-grow px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50"
+                    placeholder="Cole sua chave de API aqui"
+                />
+                <button 
+                    onClick={handleTestApiKey}
+                    disabled={isTestingKey || !isEditing}
+                    className="py-2 px-4 text-sm font-semibold bg-gray-200 dark:bg-dark-border rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50 flex items-center gap-2"
+                >
+                    {isTestingKey ? <LoadingSpinner className="w-5 h-5"/> : 'Testar'}
+                </button>
+            </div>
+            {apiKeyStatus !== 'untested' && (
+                <div className={`mt-2 text-sm font-semibold flex items-center gap-2 ${apiKeyStatus === 'valid' ? 'text-green-600' : 'text-red-500'}`}>
+                    {apiKeyStatus === 'valid' ? 
+                        <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>Chave Válida!</> :
+                        <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>Chave Inválida. Verifique e tente novamente.</>
+                    }
+                </div>
+            )}
+        </div>
+    </div>
+  );
+  
   const renderSubscriptionTab = () => {
     return isAdmin ? renderAdminSubscriptionTab() : renderUserSubscriptionTab();
   }
+
+  const isProPlan = !isAdmin && initialSubscription?.package === 4;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" onClick={onClose}>
@@ -446,12 +543,21 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
           >
             {isAdmin ? 'Plano e Permissões' : 'Meu Plano'}
           </button>
+           {isProPlan && (
+            <button
+              onClick={() => setActiveTab('api')}
+              className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'api' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-border'}`}
+            >
+              API de IA
+            </button>
+          )}
         </div>
 
         <div className="flex-grow p-6 overflow-y-auto">
           {activeTab === 'data' && renderDataTab()}
           {activeTab === 'payment' && renderPaymentTab()}
           {activeTab === 'subscription' && renderSubscriptionTab()}
+          {isProPlan && activeTab === 'api' && renderApiTab()}
         </div>
         
         {isAdmin && !isEditing && (

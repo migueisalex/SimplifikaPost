@@ -43,6 +43,8 @@ const App: React.FC = () => {
     fullName: '',
     email: 'usuario@simplifika.post',
     birthDate: '',
+    geminiApiKey: '',
+    geminiApiKeyTestStatus: 'untested',
   });
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', {
     cpf: '',
@@ -57,7 +59,7 @@ const App: React.FC = () => {
   });
   const [subscription, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
-  const { canCreatePost, canGenerateText, incrementPostCount, incrementAiGenerationCount } = useUsageTracker(subscription);
+  const { canCreatePost, canGenerateText, canGenerateImages, incrementPostCount, incrementAiGenerationCount, incrementImageGenerationCount, usage, isFreemiumPlan } = useUsageTracker(subscription);
 
   const handleUpgradeRequest = useCallback((reason: string) => {
     setUpgradeReason(reason);
@@ -69,7 +71,7 @@ const App: React.FC = () => {
     
     let allowedPlatforms: Platform[] = [];
     switch(currentSubscription.package) {
-      case 0: // Tester
+      case 0: // Freemium
         allowedPlatforms = [Platform.INSTAGRAM, Platform.FACEBOOK];
         break;
       case 1:
@@ -79,6 +81,7 @@ const App: React.FC = () => {
         allowedPlatforms = [Platform.INSTAGRAM, Platform.FACEBOOK, Platform.TIKTOK];
         break;
       case 3:
+      case 4: // Pro
         allowedPlatforms = [Platform.INSTAGRAM, Platform.FACEBOOK, Platform.TIKTOK, Platform.YOUTUBE];
         break;
       default:
@@ -87,17 +90,16 @@ const App: React.FC = () => {
     
     return {
       allowedPlatforms,
-      canGenerateImages: currentSubscription.hasAiAddon && currentSubscription.package > 0,
     };
   }, [subscription]);
 
   const permissions = getPermissions();
 
 
-  const handleOpenModal = (post: Post | null) => {
+  const handleOpenModal = useCallback((post: Post | null) => {
     setEditingPost(post);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleCloseModal = useCallback(() => {
     setEditingPost(null);
@@ -105,27 +107,25 @@ const App: React.FC = () => {
   }, []);
 
   const handleSavePost = useCallback((post: Post) => {
-    const isNewPost = !posts.some(p => p.id === post.id);
-
-    if (isNewPost && !canCreatePost) {
-        handleUpgradeRequest("post_limit");
-        return;
-    }
-
     setPosts(prevPosts => {
-      if (isNewPost) {
+      const isEditing = prevPosts.some(p => p.id === post.id);
+
+      if (isEditing) {
+        return prevPosts.map(p => (p.id === post.id ? post : p));
+      } else {
+        // This is a new post (or a clone)
+        if (!canCreatePost) {
+          handleUpgradeRequest("post_limit");
+          return prevPosts; // Abort state update if limit is reached
+        }
+        incrementPostCount();
         return [...prevPosts, post];
       }
-      return prevPosts.map(p => (p.id === post.id ? post : p));
     });
-
-    if (isNewPost) {
-        incrementPostCount();
-    }
     
     setView(View.CALENDAR);
     handleCloseModal();
-  }, [handleCloseModal, setPosts, posts, canCreatePost, incrementPostCount, handleUpgradeRequest]);
+  }, [canCreatePost, handleCloseModal, handleUpgradeRequest, incrementPostCount, setPosts]);
   
   const handleSaveHashtagGroup = useCallback((group: Omit<HashtagGroup, 'id'>) => {
     const newGroup = { ...group, id: crypto.randomUUID() };
@@ -152,12 +152,10 @@ const App: React.FC = () => {
       ...postToClone,
       id: crypto.randomUUID(), // New ID makes it a new post
       status: 'scheduled' as const,
-      // Set date to now, forcing user to pick a new future date
-      scheduledAt: new Date().toISOString(), 
+      scheduledAt: postToClone.scheduledAt, // Keep original date
     };
     handleOpenModal(clonedPost);
-    incrementPostCount();
-  }, [canCreatePost, handleUpgradeRequest, incrementPostCount]);
+  }, [canCreatePost, handleUpgradeRequest, handleOpenModal]);
   
   const handleEditPostFromDetail = (post: Post) => {
     setViewingPost(null);
@@ -364,10 +362,13 @@ const App: React.FC = () => {
             onSaveHashtagGroup={handleSaveHashtagGroup}
             onOpenDeleteGroupModal={() => setIsDeleteGroupModalOpen(true)}
             allowedPlatforms={permissions.allowedPlatforms}
-            canGenerateImages={permissions.canGenerateImages}
+            canGenerateImages={canGenerateImages}
             onUpgradeRequest={handleUpgradeRequest}
             canGenerateText={canGenerateText}
             incrementAiGenerationCount={incrementAiGenerationCount}
+            incrementImageGenerationCount={incrementImageGenerationCount}
+            userApiKey={userData.geminiApiKey}
+            userApiKeyStatus={userData.geminiApiKeyTestStatus}
           />
         )}
         
@@ -413,6 +414,8 @@ const App: React.FC = () => {
             initialUserData={userData}
             initialPaymentData={paymentData}
             initialSubscription={subscription || { package: 0, hasAiAddon: false }}
+            usageData={usage}
+            isFreemium={isFreemiumPlan}
             onSave={(newUserData, newPaymentData, newSubscription) => {
               setUserData(newUserData);
               setPaymentData(newPaymentData);

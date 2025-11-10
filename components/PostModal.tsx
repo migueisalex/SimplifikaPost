@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 import React, { useState, useEffect, useCallback } from 'react';
 import { Post, Platform, PostType, MediaItem, HashtagGroup } from '../types';
 import { PlatformIcons } from './PlatformIcons';
@@ -26,6 +25,9 @@ interface PostModalProps {
   onUpgradeRequest: (reason: string) => void;
   canGenerateText: boolean;
   incrementAiGenerationCount: () => void;
+  incrementImageGenerationCount: () => void;
+  userApiKey?: string;
+  userApiKeyStatus?: 'untested' | 'valid' | 'invalid';
 }
 
 const appendHashtags = (currentContent: string, newHashtags: string): string => {
@@ -52,14 +54,14 @@ const appendHashtags = (currentContent: string, newHashtags: string): string => 
 };
 
 
-const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount }) => {
+const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount, incrementImageGenerationCount, userApiKey, userApiKeyStatus }) => {
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [postType, setPostType] = useState<PostType>(PostType.FEED);
-  const [croppingItem, setCroppingItem] = useState<MediaItem | null>(null);
+  const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
   const [postAspectRatio, setPostAspectRatio] = useState<number>(1);
-  const [croppingAspectRatio, setCroppingAspectRatio] = useState<number>(1);
+  const [editingAspectRatio, setEditingAspectRatio] = useState<number>(1);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledHour, setScheduledHour] = useState('12');
   const [scheduledMinute, setScheduledMinute] = useState('00');
@@ -96,8 +98,15 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             return item;
         }));
         setMedia(updatedMedia);
+        
+        // Se a mídia atual precisa de recorte, abre o cortador
+        const currentItem = updatedMedia[currentMediaIndex];
+        if (currentItem && currentItem.needsCrop && currentItem.type.startsWith('image/')) {
+            setEditingAspectRatio(ratio);
+            setEditingItem(currentItem);
+        }
     }
-  }, [media, checkImageNeedsCrop]);
+  }, [media, checkImageNeedsCrop, currentMediaIndex]);
 
 
   useEffect(() => {
@@ -214,16 +223,17 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
     e.target.value = ''; // Reset input
   };
   
-  const handleCropSave = (croppedImageUrl: string) => {
-    if (croppingItem) {
-        setMedia(prev => prev.map(item => 
-            item.id === croppingItem.id 
-            ? { ...item, url: croppedImageUrl, needsCrop: false, aspectRatio: croppingAspectRatio } 
-            : item
-        ));
-        setCroppingItem(null);
+  const handleEditSave = (editedUrl: string, edits: NonNullable<MediaItem['edits']>) => {
+    if (editingItem) {
+      setMedia(prev => prev.map(item =>
+        item.id === editingItem.id
+          ? { ...item, url: editedUrl, edits, needsCrop: false, aspectRatio: editingAspectRatio }
+          : item
+      ));
+      setEditingItem(null);
     }
   };
+
 
   const removeMediaItem = (idToRemove: string) => {
     setMedia(prev => {
@@ -241,9 +251,8 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
         setError("A edição de vídeo não é suportada.");
         return;
     }
-    // Use the current post aspect ratio for cropping, not the media's old one
-    setCroppingAspectRatio(postAspectRatio);
-    setCroppingItem(mediaItem);
+    setEditingAspectRatio(postAspectRatio);
+    setEditingItem(mediaItem);
   }
 
   const handleHashtagGroupSelect = (groupId: string) => {
@@ -340,6 +349,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
         };
         setMedia(prev => [...prev, newItem]);
         setCurrentMediaIndex(media.length);
+        incrementImageGenerationCount();
     } catch (e) {
         setError("Erro ao processar a imagem gerada.");
     } finally {
@@ -573,12 +583,12 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
         </div>
       </div>
       
-      {croppingItem && (
+      {editingItem && (
         <ImageCropper 
-            imageSrc={croppingItem.originalUrl} 
-            aspectRatio={croppingAspectRatio} 
-            onSave={handleCropSave} 
-            onCancel={() => setCroppingItem(null)}
+            mediaItem={editingItem}
+            aspectRatio={editingAspectRatio} 
+            onSave={handleEditSave} 
+            onCancel={() => setEditingItem(null)}
         />
       )}
       
@@ -600,6 +610,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             onClose={() => setIsSuggestionsModalOpen(false)}
             originalText={textForAISuggestion}
             onSelectSuggestion={handleSelectSuggestion}
+            userApiKey={userApiKey}
         />
       )}
 
@@ -613,6 +624,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             canGenerateText={canGenerateText}
             incrementAiGenerationCount={incrementAiGenerationCount}
             onUpgradeRequest={onUpgradeRequest}
+            userApiKey={userApiKey}
           />
       )}
 
@@ -621,6 +633,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             isOpen={isImageGenerationModalOpen}
             onClose={() => setIsImageGenerationModalOpen(false)}
             onGenerate={handleImageGenerated}
+            userApiKey={userApiKey}
         />
       )}
     </>
