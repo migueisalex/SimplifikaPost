@@ -8,11 +8,24 @@ interface TooltipProps {
 const Tooltip: React.FC<TooltipProps> = ({ children, text }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // By checking for text in the event handler, we prevent an unnecessary state update
+  // and re-render cycle when there's no tooltip to display. This can prevent
+  // subtle visual glitches.
+  const handleMouseEnter = () => {
+    if (text) {
+      setShowTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
   return (
     <div 
       className="relative flex items-center"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {children}
       {showTooltip && (

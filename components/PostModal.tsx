@@ -337,7 +337,7 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
             aspectRatio: postAspectRatio,
             needsCrop,
         };
-        setMedia(prev => [...prev, ...[newItem]]);
+        setMedia(prev => [...prev, newItem]);
         setCurrentMediaIndex(media.length);
     } catch (e) {
         setError("Erro ao processar a imagem gerada.");
@@ -486,9 +486,9 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                   <h3 className="font-bold text-gray-700 dark:text-gray-200 mb-2">Formato</h3>
                   <div className="flex gap-2">
                       <button onClick={() => handleAspectRatioChange(1)} className={`w-12 h-12 rounded-md border-2 transition ${postAspectRatio === 1 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}>1:1</button>
-                      <button onClick={() => handleAspectRatioChange(4/5)} className={`w-12 h-12 rounded-md border-2 transition flex items-center justify-center ${Math.abs(postAspectRatio - 4/5) < 0.01 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}><div className="w-8 h-10 bg-gray-300 dark:bg-dark-border rounded-sm"></div></button>
+                      <button onClick={() => handleAspectRatioChange(4/5)} className={`w-12 h-12 rounded-md border-2 transition flex items-center justify-center ${postAspectRatio === 4/5 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}><div className="w-8 h-10 bg-gray-300 dark:bg-dark-border rounded-sm"></div></button>
                       <button onClick={() => handleAspectRatioChange(16/9)} className={`w-12 h-12 rounded-md border-2 transition flex items-center justify-center ${Math.abs(postAspectRatio - 16/9) < 0.01 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}><div className="w-10 h-6 bg-gray-300 dark:bg-dark-border rounded-sm"></div></button>
-                      <button onClick={() => handleAspectRatioChange(9/16)} className={`w-12 h-12 rounded-md border-2 transition flex items-center justify-center ${Math.abs(postAspectRatio - 9/16) < 0.01 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}><div className="w-6 h-10 bg-gray-300 dark:bg-dark-border rounded-sm"></div></button>
+                      <button onClick={() => handleAspectRatioChange(9/16)} className={`w-12 h-12 rounded-md border-2 transition flex items-center justify-center ${postAspectRatio === 9/16 ? 'border-brand-primary' : 'border-gray-300 dark:border-dark-border'}`}><div className="w-6 h-10 bg-gray-300 dark:bg-dark-border rounded-sm"></div></button>
                   </div>
                 </div>
               )}

@@ -1,42 +1,65 @@
-import { useCallback, useEffect } from 'react';
-import useLocalStorage from './useLocalStorage';
+import { useState, Dispatch, SetStateAction, useCallback } from 'react';
 import { Post } from '../types';
 
-const getInitialPosts = (): Post[] => {
-    const storedPosts = localStorage.getItem('social-scheduler-posts');
-    if (storedPosts) {
-        return JSON.parse(storedPosts).map((post: Post) => ({
-            ...post,
-            scheduleDate: new Date(post.scheduleDate),
-        }));
-    }
-    return [];
+const SIXTY_DAYS_IN_MS = 60 * 24 * 60 * 60 * 1000;
+
+const cleanupOldPosts = (posts: Post[]): Post[] => {
+    const now = new Date();
+    return posts.filter(post => {
+        if (post.status !== 'published') {
+            return true; // Manter todos os posts que não foram publicados
+        }
+        const postDate = new Date(post.scheduledAt);
+        const ageInMs = now.getTime() - postDate.getTime();
+        
+        // Retorna false para filtrar (remover) posts com mais de 60 dias
+        return ageInMs <= SIXTY_DAYS_IN_MS;
+    });
 };
 
-export const usePostsStorage = () => {
-    const [posts, setPosts] = useLocalStorage<Post[]>('social-scheduler-posts', getInitialPosts());
+function usePostsStorage(key: string, initialValue: Post[]): [Post[], Dispatch<SetStateAction<Post[]>>] {
+    const [posts, setPostsInternal] = useState<Post[]>(() => {
+        try {
+            const item = window.localStorage.getItem(key);
+            const loadedPosts = item ? JSON.parse(item) : initialValue;
+            
+            const cleanedPosts = cleanupOldPosts(loadedPosts);
 
-    const addPost = useCallback((post: Post) => {
-        setPosts(prev => [...prev, post]);
-    }, [setPosts]);
+            // Se a limpeza ocorreu no carregamento, atualize o localStorage imediatamente
+            if (loadedPosts.length > cleanedPosts.length) {
+                console.log(`Removidos ${loadedPosts.length - cleanedPosts.length} posts antigos publicados na inicialização.`);
+                window.localStorage.setItem(key, JSON.stringify(cleanedPosts));
+            }
+            return cleanedPosts;
+        } catch (error) {
+            console.error("Erro ao carregar posts do localStorage:", error);
+            return initialValue;
+        }
+    });
 
-    const updatePost = useCallback((updatedPost: Post) => {
-        setPosts(prev => prev.map(post => post.id === updatedPost.id ? updatedPost : post));
-    }, [setPosts]);
+    const setPosts = useCallback((value: Post[] | ((val: Post[]) => Post[])) => {
+        setPostsInternal(currentPosts => {
+            const postsToStore = value instanceof Function ? value(currentPosts) : value;
+            const cleanedPosts = cleanupOldPosts(postsToStore);
 
-    const deletePost = useCallback((postId: string) => {
-        setPosts(prev => prev.filter(post => post.id !== postId));
-    }, [setPosts]);
+            if (postsToStore.length > cleanedPosts.length) {
+                console.log(`Removidos ${postsToStore.length - cleanedPosts.length} posts antigos publicados ao salvar.`);
+            }
+            
+            try {
+                window.localStorage.setItem(key, JSON.stringify(cleanedPosts));
+            } catch (error) {
+                console.error("Falha ao salvar posts no localStorage:", error);
+                // Não atualize o estado se o armazenamento falhar, para evitar inconsistência de dados
+                alert("Ocorreu um erro ao salvar suas postagens. O armazenamento pode estar cheio.");
+                return currentPosts; 
+            }
+            return cleanedPosts;
+        });
+    // Fix: Added setPostsInternal to the dependency array as it's used within the callback.
+    }, [key, setPostsInternal]);
 
-    // Save to localStorage whenever posts change
-    useEffect(() => {
-        localStorage.setItem('social-scheduler-posts', JSON.stringify(posts));
-    }, [posts]);
+    return [posts, setPosts as Dispatch<SetStateAction<Post[]>>];
+}
 
-    return {
-        posts,
-        addPost,
-        updatePost,
-        deletePost,
-    };
-};
+export default usePostsStorage;

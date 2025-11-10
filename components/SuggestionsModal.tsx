@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { GoogleGenAI, Type } from "@google/genai";
 import { Suggestion } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 import GeminiIcon from './GeminiIcon';
@@ -23,25 +24,46 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          // Chamar a API backend ao invés de chamar diretamente o Gemini
-          const response = await fetch('/api/copy-suggestions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          // FIX: Use process.env.API_KEY as per the coding guidelines.
+          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          
+          const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
+
+          const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: {
+                      type: Type.STRING,
+                      description: 'Um título criativo e curto para a sugestão de copy.',
+                    },
+                    copy: {
+                      type: Type.STRING,
+                      description: 'A sugestão de copy reescrita de forma profissional, sem hashtags.',
+                    },
+                  },
+                  required: ["title", "copy"],
+                },
+              },
             },
-            body: JSON.stringify({ text: originalText }),
           });
-
-          if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status}`);
-          }
-
-          const parsedSuggestions = await response.json();
+          
+          const parsedSuggestions = JSON.parse(response.text);
           setSuggestions(parsedSuggestions);
 
         } catch (e) {
           console.error("Erro ao buscar sugestões:", e);
-          setError("Não foi possível gerar sugestões. Tente novamente mais tarde.");
+          if (e instanceof Error && (e.message.includes("429") || e.message.includes("Quota exceeded"))) {
+            setError("Limite de uso da API atingido. Verifique seu plano e faturamento, ou tente novamente mais tarde.");
+          } else {
+            setError("Não foi possível gerar sugestões. Tente novamente mais tarde.");
+          }
         } finally {
           setIsLoading(false);
         }

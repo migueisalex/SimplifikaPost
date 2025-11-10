@@ -26,8 +26,8 @@ const PostCard: React.FC<{post: Post, onEdit: (post: Post) => void, onDelete: (i
                             <video src={firstMedia.url} controls className="rounded-lg w-full h-40 object-cover" />
                         )
                     ) : (
-                        <div className="rounded-lg w-full h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <span className="text-gray-500">Sem mídia</span>
+                        <div className="rounded-lg w-full h-40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-center text-gray-500 p-2">
+                            <span className="text-sm">Sem mídia</span>
                         </div>
                     )}
                     {post.media.length > 1 && (

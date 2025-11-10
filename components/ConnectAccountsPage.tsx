@@ -6,10 +6,12 @@ interface ConnectAccountsPageProps {
     onContinue: () => void;
     connectedPlatforms: Platform[];
     setConnectedPlatforms: (platforms: Platform[]) => void;
+    allowedPlatforms: Platform[];
+    onUpgradeRequest: () => void;
 }
 
-const ConnectAccountsPage: React.FC<ConnectAccountsPageProps> = ({ onContinue, connectedPlatforms, setConnectedPlatforms }) => {
-
+const ConnectAccountsPage: React.FC<ConnectAccountsPageProps> = ({ onContinue, connectedPlatforms, setConnectedPlatforms, allowedPlatforms, onUpgradeRequest }) => {
+    
     const handleConnect = (platform: Platform) => {
         // Simulate OAuth flow
         alert(`Simulando conexão com ${platform}... Em uma aplicação real, isso abriria uma janela de autorização.`);
@@ -23,6 +25,8 @@ const ConnectAccountsPage: React.FC<ConnectAccountsPageProps> = ({ onContinue, c
             setConnectedPlatforms(connectedPlatforms.filter(p => p !== platformToDisconnect));
         }
     }
+
+    const allPlatforms = Object.values(Platform);
     
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4">
@@ -34,16 +38,28 @@ const ConnectAccountsPage: React.FC<ConnectAccountsPageProps> = ({ onContinue, c
                     </p>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
-                        {Object.values(Platform).map(platform => {
+                        {allPlatforms.map(platform => {
+                             const isAllowed = allowedPlatforms.includes(platform);
                              const isConnected = connectedPlatforms.includes(platform);
+
+                             const handleClick = () => {
+                                 if (!isAllowed) {
+                                     onUpgradeRequest();
+                                 } else if (!isConnected) {
+                                     handleConnect(platform);
+                                 }
+                             };
+
                              return (
                                 <div key={platform} className="relative">
                                     <button
-                                        onClick={() => !isConnected && handleConnect(platform)}
+                                        onClick={handleClick}
                                         className={`w-full flex items-center justify-center gap-3 p-4 rounded-lg border-2 font-semibold transition-all duration-200 group
                                             ${isConnected 
                                                 ? 'bg-gray-100 dark:bg-gray-700/50 border-gray-300 dark:border-dark-border text-gray-500 dark:text-gray-400 cursor-default' 
-                                                : 'bg-transparent border-gray-300 dark:border-dark-border text-gray-700 dark:text-gray-200 hover:border-brand-primary hover:bg-brand-light dark:hover:bg-brand-primary/10'
+                                                : isAllowed
+                                                    ? 'bg-transparent border-gray-300 dark:border-dark-border text-gray-700 dark:text-gray-200 hover:border-brand-primary hover:bg-brand-light dark:hover:bg-brand-primary/10'
+                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 opacity-70 hover:opacity-100 hover:border-gray-400'
                                             }`
                                         }
                                     >

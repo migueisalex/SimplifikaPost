@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-// import { GoogleGenAI, Modality } from "@google/genai"; // Removido para usar a API segura
+import { GoogleGenAI, Modality } from "@google/genai";
 import LoadingSpinner from './LoadingSpinner';
 import GeminiIcon from './GeminiIcon';
 
@@ -24,36 +24,34 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
     setError(null);
 
     try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // FIX: Use process.env.API_KEY as per the coding guidelines.
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [{ text: prompt.trim() }],
         },
-        body: JSON.stringify({ prompt }),
+        config: {
+          responseModalities: [Modality.IMAGE],
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        // Se o backend retornou um erro detalhado, usamos ele
-        const errorMessage = data.details || data.error || "Erro desconhecido ao gerar imagem.";
-        throw new Error(errorMessage);
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          await onGenerate(part.inlineData.data, part.inlineData.mimeType);
+          onClose(); // Close modal on success
+          return;
+        }
       }
+      throw new Error("Nenhuma imagem foi retornada pela API.");
 
-      await onGenerate(data.base64Data, data.mimeType);
-      onClose(); // Close modal on success
-
-    } catch (e: any) {
+    } catch (e) {
       console.error("Erro ao gerar imagem:", e);
-      
-      let friendlyError = "Não foi possível gerar a imagem. Verifique o prompt ou tente novamente.";
-      
-      // Lógica para tratar o erro 429 (Quota Exceeded)
-      if (e.message && e.message.includes('429')) {
-          friendlyError = "Os créditos diários para geração de imagem terminaram, tente novamente amanhã!";
+      if (e instanceof Error && (e.message.includes("429") || e.message.includes("Quota exceeded"))) {
+        setError("Limite de uso da API atingido. Verifique seu plano e faturamento, ou tente novamente mais tarde.");
+      } else {
+        setError("Não foi possível gerar a imagem. Verifique o prompt ou tente novamente.");
       }
-      
-      setError(friendlyError);
     } finally {
       setIsLoading(false);
     }

@@ -26,13 +26,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     
     const [contactToDelete, setContactToDelete] = useState<AlertContact | null>(null);
 
-    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData, updatedSubscription?: Subscription) => {
+    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData, updatedSubscription: Subscription) => {
         if (!viewingClient) return;
         
         setClients(prevClients => 
             prevClients.map(client => 
                 client.id === viewingClient.id 
-                ? { ...client, userData: updatedUserData, paymentData: updatedPaymentData, subscription: updatedSubscription || client.subscription }
+                ? { ...client, userData: updatedUserData, paymentData: updatedPaymentData, subscription: updatedSubscription }
                 : client
             )
         );
@@ -130,7 +130,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 onClose={() => setContactToDelete(null)}
                 onConfirm={handleDeleteContact}
                 title="Excluir Contato de Alerta"
-                message={`Você tem certeza que deseja excluir o contato \"${contactToDelete?.name}\"? Esta ação não pode ser desfeita.`}
+                message={`Você tem certeza que deseja excluir o contato "${contactToDelete?.name}"? Esta ação não pode ser desfeita.`}
                 confirmButtonText="Excluir Contato"
             />
         </div>

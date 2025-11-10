@@ -260,207 +260,244 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
         )}
     </div>
   );
-
-  const renderPaymentTab = () => (
-    <div className="space-y-4">
-        <div className="flex justify-between items-center border-b dark:border-dark-border pb-4">
-            <h3 className="text-lg font-bold">Informações de Cobrança</h3>
-            {isEditing && (
-                <button onClick={() => setIsEditingCard(true)} className="text-brand-primary font-semibold hover:underline text-sm">
-                    {isEditingCard ? 'Cancelar Edição' : 'Editar Cartão'}
-                </button>
-            )}
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
+  
+  const renderPaymentForm = () => {
+    const fieldsDisabled = isAdmin && !isEditing;
+    return (
+        <div className="space-y-4">
             <div>
                 <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CPF</label>
-                <input
-                    type="text" name="cpf" id="cpf" value={paymentFormData.cpf} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
+                <input type="text" name="cpf" id="cpf" value={paymentFormData.cpf} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full md:w-1/2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed" placeholder="000.000.000-00"/>
             </div>
-            <div className="relative">
-                <label htmlFor="cep" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CEP</label>
-                <input
-                    type="text" name="cep" id="cep" value={paymentFormData.cep} onChange={handlePaymentChange} onBlur={handleCepBlur}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
-                {isCepLoading && <div className="absolute right-2 top-8"><LoadingSpinner className="w-5 h-5"/></div>}
-                {cepError && <p className="text-red-500 text-xs mt-1">{cepError}</p>}
-            </div>
-        </div>
-        
-        <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço</label>
-            <input
-                type="text" name="address" id="address" value={paymentFormData.address} onChange={handlePaymentChange}
-                disabled={!isEditing}
-                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-            />
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-            <div>
-                <label htmlFor="number" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
-                <input
-                    type="text" name="number" id="number" value={paymentFormData.number} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
-            </div>
-            <div className="col-span-2">
-                <label htmlFor="complement" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Complemento</label>
-                <input
-                    type="text" name="complement" id="complement" value={paymentFormData.complement} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
-            </div>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-            <div>
-                <label htmlFor="district" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Bairro</label>
-                <input
-                    type="text" name="district" id="district" value={paymentFormData.district} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
-            </div>
-            <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cidade</label>
-                <input
-                    type="text" name="city" id="city" value={paymentFormData.city} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                />
-            </div>
-            <div>
-                <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
-                <select
-                    name="state" id="state" value={paymentFormData.state} onChange={handlePaymentChange}
-                    disabled={!isEditing}
-                    className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"
-                >
-                    <option value="">Selecione</option>
-                    {brazilianStates.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-            </div>
-        </div>
-        
-        <div className="border-t dark:border-dark-border pt-4">
-            <h3 className="text-lg font-bold mb-2">Cartão de Crédito</h3>
-            <div className="flex items-center justify-between">
-                <CardIcon />
-                {isEditingCard && (
-                    <input
-                        type="text" name="cardNumber" id="cardNumber" value={paymentFormData.cardNumber || ''} onChange={handlePaymentChange}
-                        placeholder="Número do Cartão (simulação)"
-                        className="mt-1 block w-1/2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm"
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                <div>
+                  <label htmlFor="cep" className="block text-sm font-medium text-gray-700 dark:text-gray-300">CEP</label>
+                  <div className="relative mt-1">
+                    <input 
+                        type="text" 
+                        name="cep" 
+                        id="cep" 
+                        value={paymentFormData.cep} 
+                        onChange={handlePaymentChange} 
+                        onBlur={handleCepBlur}
+                        disabled={fieldsDisabled}
+                        className="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed" 
+                        placeholder="00000-000"
                     />
-                )}
-                {!isEditingCard && <p className="text-gray-500 dark:text-gray-400">**** **** **** {paymentFormData.cardNumber?.slice(-4) || '0000'}</p>}
+                     {isCepLoading && (
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <LoadingSpinner className="w-5 h-5" />
+                        </div>
+                     )}
+                  </div>
+                  {cepError && <p className="mt-1 text-xs text-red-500">{cepError}</p>}
+                </div>
             </div>
-        </div>
-    </div>
-  );
-
-  const renderSubscriptionTab = () => (
-    <div className="space-y-4">
-        <div className="flex justify-between items-center border-b dark:border-dark-border pb-4">
-            <h3 className="text-lg font-bold">Detalhes do Plano</h3>
-            {!isAdmin && onUpgradePlan && (
-                <button onClick={onUpgradePlan} className="py-2 px-4 text-sm bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition">
-                    Alterar Plano
-                </button>
-            )}
-        </div>
-        
-        <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <p className="text-xl font-bold text-brand-primary">{packageDetails[subscriptionData.package].name}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Postagens para: {packageDetails[subscriptionData.package].features.join(', ')}</p>
-            
-            {isAdmin && isEditing && (
-                <div className="mt-4">
-                    <label htmlFor="package" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mudar Pacote</label>
-                    <select
-                        name="package" id="package" value={subscriptionData.package} onChange={e => setSubscriptionData(prev => ({...prev, package: Number(e.target.value) as PackageTier}))}
-                        className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm sm:text-sm"
-                    >
-                        {Object.entries(packageDetails).map(([key, details]) => (
-                            <option key={key} value={key}>{details.name}</option>
-                        ))}
-                    </select>
+            <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Endereço</label>
+                <input type="text" name="address" id="address" value={paymentFormData.address} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed" placeholder="Rua, Av, etc."/>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+               <div>
+                  <label htmlFor="number" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Número</label>
+                  <input type="text" name="number" id="number" value={paymentFormData.number} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="complement" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Complemento <span className="text-gray-400">(Opcional)</span></label>
+                  <input type="text" name="complement" id="complement" value={paymentFormData.complement} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed" placeholder="Apto, Bloco, etc."/>
+                </div>
+            </div>
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="district" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Bairro</label>
+                  <input type="text" name="district" id="district" value={paymentFormData.district} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"/>
+                </div>
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cidade</label>
+                  <input type="text" name="city" id="city" value={paymentFormData.city} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed"/>
+                </div>
+                <div>
+                  <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Estado</label>
+                  <select id="state" name="state" value={paymentFormData.state} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800/50 disabled:cursor-not-allowed">
+                    <option value="">Selecione...</option>
+                    {brazilianStates.map(state => <option key={state} value={state}>{state}</option>)}
+                  </select>
+                </div>
+            </div>
+            {!isAdmin && (
+                <div>
+                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Número do Cartão</label>
+                    <input type="text" name="cardNumber" id="cardNumber" value={paymentFormData.cardNumber} onChange={handlePaymentChange} disabled={fieldsDisabled} className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" placeholder="0000 0000 0000 0000"/>
                 </div>
             )}
         </div>
-        
-        <div className={`p-4 rounded-lg ${subscriptionData.hasAiAddon ? 'bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' : 'bg-gray-100 dark:bg-gray-800'}`}>
-            <div className="flex justify-between items-center">
-                <p className="font-bold">Criação de Imagens com IA</p>
-                {isAdmin && isEditing && (
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={subscriptionData.hasAiAddon} onChange={e => setSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))} className="sr-only peer" />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-primary"></div>
-                    </label>
-                )}
+    );
+  };
+
+  const renderPaymentView = () => {
+    const last4 = paymentFormData.cardNumber ? paymentFormData.cardNumber.slice(-4) : '????';
+    return (
+      <div className="flex flex-col items-center justify-center space-y-6 p-8">
+          <CardIcon />
+          <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+              Cartão com final <span className="font-mono">{last4}</span>
+          </p>
+          <button onClick={() => setIsEditingCard(true)} className="py-2 px-6 bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+              Alterar Cartão
+          </button>
+      </div>
+    );
+  };
+  
+  const renderPaymentTab = () => (
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-dark-border">
+            <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Nome Completo</label>
+                <p className="text-sm font-semibold truncate">{formData.fullName || 'Não informado'}</p>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {subscriptionData.hasAiAddon ? 'Recurso Ativo. 60 criações/mês.' : 'Recurso Inativo. Faça o upgrade para desbloquear.'}
-            </p>
+            <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Data de Nascimento</label>
+                <p className="text-sm font-semibold">{formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Não informada'}</p>
+            </div>
+            <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">Email</label>
+                <p className="text-sm font-semibold truncate">{formData.email}</p>
+            </div>
+        </div>
+        
+        {(!isAdmin && !isEditingCard) ? renderPaymentView() : renderPaymentForm()}
+    </div>
+  );
+  
+  const renderAdminSubscriptionTab = () => (
+    <div className="space-y-6">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Plano do Cliente</h3>
+        <div className="space-y-2">
+            {(Object.keys(packageDetails) as any[]).map((pkgTier: PackageTier) => {
+                if(pkgTier === 0) return null; // Don't show tester plan in admin panel
+                return (
+                    <label key={pkgTier} className={`flex items-start p-4 border rounded-lg transition ${!isEditing ? 'cursor-not-allowed' : 'cursor-pointer'} ${subscriptionData.package == pkgTier ? 'border-brand-primary bg-brand-light dark:bg-brand-primary/10' : 'border-gray-300 dark:border-dark-border'}`}>
+                        <input
+                            type="radio"
+                            name="package"
+                            value={pkgTier}
+                            checked={subscriptionData.package == pkgTier}
+                            onChange={() => setSubscriptionData(prev => ({...prev, package: pkgTier}))}
+                            disabled={!isEditing}
+                            className="h-5 w-5 text-brand-primary focus:ring-brand-secondary border-gray-300 mt-0.5"
+                        />
+                        <div className="ml-3 text-sm">
+                            <span className="font-bold text-gray-900 dark:text-gray-100">Pacote {pkgTier}</span>
+                            <p className="text-gray-500 dark:text-gray-400">Plataformas: {packageDetails[pkgTier].features.join(', ')}</p>
+                        </div>
+                    </label>
+                )
+            })}
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Recursos Adicionais</h3>
+        <div className={`relative flex items-start p-3 rounded-md ${!isEditing ? 'opacity-70' : ''}`}>
+            <div className="flex items-center h-5">
+                <input
+                    id="ai-addon"
+                    name="ai-addon"
+                    type="checkbox"
+                    checked={subscriptionData.hasAiAddon}
+                    onChange={(e) => setSubscriptionData(prev => ({...prev, hasAiAddon: e.target.checked}))}
+                    disabled={!isEditing}
+                    className="focus:ring-brand-secondary h-4 w-4 text-brand-primary border-gray-300 rounded"
+                />
+            </div>
+            <div className="ml-3 text-sm">
+                <label htmlFor="ai-addon" className={`font-medium text-gray-700 dark:text-gray-300 ${!isEditing ? 'cursor-not-allowed' : ''}`}>Criação de Imagens com IA</label>
+                <p className="text-gray-500 dark:text-gray-400">Permite que o cliente gere até 60 imagens por mês usando IA.</p>
+            </div>
         </div>
     </div>
   );
+  
+  const renderUserSubscriptionTab = () => (
+    <div className="space-y-6 text-center">
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white">Seu Plano Atual</h3>
+        <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-dark-border inline-block shadow-sm">
+            <p className="text-3xl font-bold text-brand-primary mb-2">{packageDetails[subscriptionData.package].name}</p>
+            <p className="text-gray-600 dark:text-gray-300">Acesso a: {packageDetails[subscriptionData.package].features.join(', ')}</p>
+            {subscriptionData.hasAiAddon && (
+                <div className="mt-3 text-sm font-semibold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/50 rounded-full px-3 py-1 inline-block">
+                    + Adicional de Imagens com IA
+                </div>
+            )}
+        </div>
+        <div className="pt-4">
+            <button onClick={onUpgradePlan} className="py-2 px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition transform hover:scale-105">
+                Alterar Plano
+            </button>
+        </div>
+    </div>
+  );
+  
+  const renderSubscriptionTab = () => {
+    return isAdmin ? renderAdminSubscriptionTab() : renderUserSubscriptionTab();
+  }
 
   const renderApiTab = () => (
     <div className="space-y-4">
-        <h3 className="text-lg font-bold border-b dark:border-dark-border pb-4">Configuração da API Gemini</h3>
+        <div className="flex items-center gap-2">
+            <GeminiIcon className="w-6 h-6 text-blue-500" />
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white">API Key do Google Gemini</h3>
+        </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-            Insira sua chave de API Gemini para usar as funcionalidades de IA.
+            Para usuários avançados. Insira sua própria chave de API do Google AI Studio para usar sua cota pessoal. 
+            Isso é útil caso você atinja o limite de IA do seu plano Simplifika Post.
         </p>
-        
         <div>
-            <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Chave de API</label>
-            <div className="mt-1 flex rounded-md shadow-sm">
+            <label htmlFor="geminiApiKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Sua Chave de API</label>
+            <div className="mt-1 flex items-stretch gap-2">
                 <input
-                    type="password" name="geminiApiKey" id="geminiApiKey" value={geminiApiKey} onChange={e => { setGeminiApiKey(e.target.value); setApiKeyStatus('idle'); }}
-                    className="flex-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-l-md shadow-sm sm:text-sm"
-                    placeholder="AIzaSy..."
+                    type="password"
+                    name="geminiApiKey"
+                    id="geminiApiKey"
+                    value={geminiApiKey}
+                    onChange={e => {
+                        setGeminiApiKey(e.target.value);
+                        setApiKeyStatus('idle'); // Reset status on change
+                    }}
+                    className="flex-grow px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-dark-border rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
+                    placeholder="Cole sua chave de API aqui"
                 />
                 <button
                     type="button"
                     onClick={handleTestApiKey}
                     disabled={isTesting || !geminiApiKey.trim()}
-                    className={`inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 dark:border-dark-border rounded-r-md bg-gray-50 dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50`}
+                    className="py-2 px-4 bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50 flex items-center justify-center min-w-[100px]"
                 >
-                    {isTesting ? <LoadingSpinner className="w-5 h-5 mr-2"/> : <GeminiIcon className="w-5 h-5 mr-2" />}
-                    {isTesting ? 'Testando...' : 'Testar Chave'}
+                    {isTesting ? <LoadingSpinner className="w-5 h-5"/> : 'Testar API'}
                 </button>
             </div>
-            <div className="mt-2 text-sm">
-                {apiKeyStatus === 'success' && <p className="text-green-500">Chave de API válida! 🎉</p>}
-                {apiKeyStatus === 'error' && <p className="text-red-500">Chave de API inválida. Verifique a chave e tente novamente.</p>}
-                {apiKeyStatus === 'testing' && <p className="text-blue-500">Testando a chave...</p>}
-                {apiKeyStatus === 'idle' && <p className="text-gray-500 dark:text-gray-400">A chave será salva ao clicar em "Salvar Alterações".</p>}
-            </div>
+            {apiKeyStatus !== 'idle' && (
+                <div className="mt-2 flex items-center gap-2 text-sm">
+                    {apiKeyStatus === 'success' && <span className="text-green-600 dark:text-green-400 font-semibold">✓ Verificada com sucesso!</span>}
+                    {apiKeyStatus === 'error' && <span className="text-red-600 dark:text-red-400 font-semibold">✗ Falha na verificação. Chave inválida ou sem permissão.</span>}
+                    {apiKeyStatus === 'testing' && <span className="text-gray-500 dark:text-gray-400 font-semibold">Testando...</span>}
+                </div>
+            )}
         </div>
     </div>
   );
 
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-[70] p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-dark-card rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b dark:border-dark-border flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{isAdmin ? 'Detalhes do Cliente' : 'Meu Perfil'}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-dark-card rounded-lg shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b dark:border-dark-border flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">Área do Usuário</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-dark-border transition">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-
-        <div className="flex border-b dark:border-dark-border bg-gray-50 dark:bg-gray-900/50">
+        
+        <div className="flex border-b dark:border-dark-border flex-wrap">
           <button 
             onClick={() => setActiveTab('data')}
             className={`flex-1 py-3 px-4 text-center font-semibold transition-colors ${activeTab === 'data' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-dark-border'}`}

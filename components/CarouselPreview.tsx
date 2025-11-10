@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { MediaItem } from '../types';
 
 interface CarouselPreviewProps {
@@ -6,36 +6,41 @@ interface CarouselPreviewProps {
   aspectRatio: number;
   onEdit: (item: MediaItem) => void;
   onRemove: (id: string) => void;
+  currentIndex: number;
+  onCurrentIndexChange: (index: number) => void;
 }
 
-const CarouselPreview: React.FC<CarouselPreviewProps> = ({ media, aspectRatio, onEdit, onRemove }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
+const CarouselPreview: React.FC<CarouselPreviewProps> = ({ media, aspectRatio, onEdit, onRemove, currentIndex, onCurrentIndexChange }) => {
+  
   useEffect(() => {
+    // This effect ensures the index is valid if the media array changes from the parent
     if (currentIndex >= media.length && media.length > 0) {
-      setCurrentIndex(media.length - 1);
-    } else if (media.length === 0) {
-      setCurrentIndex(0);
+      onCurrentIndexChange(media.length - 1);
+    } else if (media.length === 0 && currentIndex !== 0) {
+      onCurrentIndexChange(0);
     }
-  }, [media, currentIndex]);
+  }, [media, currentIndex, onCurrentIndexChange]);
 
   if (media.length === 0) {
     return null;
   }
 
   const goToPrevious = () => {
-    setCurrentIndex(prevIndex => (prevIndex === 0 ? media.length - 1 : prevIndex - 1));
+    const newIndex = currentIndex === 0 ? media.length - 1 : currentIndex - 1;
+    onCurrentIndexChange(newIndex);
   };
 
   const goToNext = () => {
-    setCurrentIndex(prevIndex => (prevIndex === media.length - 1 ? 0 : prevIndex + 1));
+    const newIndex = currentIndex === media.length - 1 ? 0 : currentIndex + 1;
+    onCurrentIndexChange(newIndex);
   };
 
   const goToSlide = (slideIndex: number) => {
-    setCurrentIndex(slideIndex);
+    onCurrentIndexChange(slideIndex);
   };
 
   const currentMedia = media[currentIndex];
+  if (!currentMedia) return null; // Defensive check
 
   return (
     <div className="flex-grow flex flex-col gap-2 min-h-0">
@@ -44,9 +49,9 @@ const CarouselPreview: React.FC<CarouselPreviewProps> = ({ media, aspectRatio, o
         style={{ aspectRatio: `${aspectRatio}` }}
       >
         {currentMedia.type.startsWith('image/') ? (
-          <img src={currentMedia.url} alt="Preview" className="max-w-full max-h-full object-contain rounded-md" />
+            <img src={currentMedia.url} alt="Preview" className="max-w-full max-h-full object-contain rounded-md" />
         ) : (
-          <video src={currentMedia.url} controls className="max-w-full max-h-full object-contain rounded-md" />
+            <video src={currentMedia.url} controls className="max-w-full max-h-full object-contain rounded-md" />
         )}
 
         {currentMedia.needsCrop && (
