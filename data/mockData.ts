@@ -19,6 +19,8 @@ export const initialClients: Client[] = [
       city: 'São Paulo',
       state: 'SP',
     },
+    subscription: { package: 3, hasAiAddon: true },
+    imageGenerationCount: 15,
   },
   {
     id: 'CLI002',
@@ -38,6 +40,8 @@ export const initialClients: Client[] = [
       city: 'Rio de Janeiro',
       state: 'RJ',
     },
+    subscription: { package: 2, hasAiAddon: false },
+    imageGenerationCount: 0,
   },
   {
     id: 'CLI003',
@@ -56,7 +60,9 @@ export const initialClients: Client[] = [
         district: 'Zona Cívico-Administrativa',
         city: 'Brasília',
         state: 'DF',
-    }
+    },
+    subscription: { package: 1, hasAiAddon: true },
+    imageGenerationCount: 45,
   },
   {
     id: 'CLI004',
@@ -75,7 +81,9 @@ export const initialClients: Client[] = [
         district: 'Pelourinho',
         city: 'Salvador',
         state: 'BA',
-    }
+    },
+    subscription: { package: 3, hasAiAddon: false },
+    imageGenerationCount: 0,
   },
   {
     id: 'CLI005',
@@ -94,7 +102,9 @@ export const initialClients: Client[] = [
         district: 'Centro',
         city: 'Curitiba',
         state: 'PR',
-    }
+    },
+    subscription: { package: 1, hasAiAddon: false },
+    imageGenerationCount: 0,
   }
 ];
 

@@ -50,6 +50,8 @@ export interface UserData {
   fullName: string;
   email: string;
   birthDate: string; // YYYY-MM-DD
+  geminiApiKey?: string;
+  geminiApiKeyTestStatus?: 'idle' | 'testing' | 'success' | 'error';
 }
 
 export interface PaymentData {
@@ -61,6 +63,14 @@ export interface PaymentData {
   district: string;
   city: string;
   state: string;
+  cardNumber?: string;
+}
+
+export type PackageTier = 0 | 1 | 2 | 3;
+
+export interface Subscription {
+  package: PackageTier;
+  hasAiAddon: boolean;
 }
 
 // Admin Panel Types
@@ -76,6 +86,8 @@ export interface Client {
   status: ClientStatus;
   userData: UserData;
   paymentData: PaymentData;
+  subscription: Subscription;
+  imageGenerationCount: number;
 }
 
 export interface AlertContact {

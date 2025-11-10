@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { Client, AlertContact, UserData, PaymentData } from '../../types';
+import { Client, AlertContact, UserData, PaymentData, Subscription } from '../../types';
 import { initialClients, initialAlertContacts } from '../../data/mockData';
 import AdminHeader from './AdminHeader';
 import ClientList from './ClientList';
@@ -26,13 +26,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
     
     const [contactToDelete, setContactToDelete] = useState<AlertContact | null>(null);
 
-    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData) => {
+    const handleSaveClient = (updatedUserData: UserData, updatedPaymentData: PaymentData, updatedSubscription?: Subscription) => {
         if (!viewingClient) return;
         
         setClients(prevClients => 
             prevClients.map(client => 
                 client.id === viewingClient.id 
-                ? { ...client, userData: updatedUserData, paymentData: updatedPaymentData }
+                ? { ...client, userData: updatedUserData, paymentData: updatedPaymentData, subscription: updatedSubscription || client.subscription }
                 : client
             )
         );
@@ -108,6 +108,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     isAdmin
                     initialUserData={viewingClient.userData}
                     initialPaymentData={viewingClient.paymentData}
+                    initialSubscription={viewingClient.subscription}
                     onSave={handleSaveClient}
                     onClose={() => setViewingClient(null)}
                 />
@@ -129,7 +130,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                 onClose={() => setContactToDelete(null)}
                 onConfirm={handleDeleteContact}
                 title="Excluir Contato de Alerta"
-                message={`Você tem certeza que deseja excluir o contato "${contactToDelete?.name}"? Esta ação não pode ser desfeita.`}
+                message={`Você tem certeza que deseja excluir o contato \"${contactToDelete?.name}\"? Esta ação não pode ser desfeita.`}
                 confirmButtonText="Excluir Contato"
             />
         </div>
