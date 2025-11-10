@@ -1,21 +1,43 @@
-import { useState, Dispatch, SetStateAction, useCallback } from 'react';
+import { useState, Dispatch, SetStateAction } from 'react';
 import { Post } from '../types';
 
-const SIXTY_DAYS_IN_MS = 60 * 24 * 60 * 60 * 1000;
+const MAX_PUBLISHED_POSTS_WITH_MEDIA = 10;
+const NINETY_DAYS_IN_MS = 90 * 24 * 60 * 60 * 1000;
 
 const cleanupOldPosts = (posts: Post[]): Post[] => {
     const now = new Date();
-    return posts.filter(post => {
-        if (post.status !== 'published') {
-            return true; // Manter todos os posts que não foram publicados
-        }
+
+    // Separa os posts por status
+    const scheduledPosts = posts.filter(p => p.status !== 'published');
+    const publishedPosts = posts.filter(p => p.status === 'published');
+
+    // Ordena os posts publicados por data, do mais recente para o mais antigo
+    publishedPosts.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+
+    const cleanedPublishedPosts = publishedPosts.map((post, index) => {
         const postDate = new Date(post.scheduledAt);
         const ageInMs = now.getTime() - postDate.getTime();
-        
-        // Retorna false para filtrar (remover) posts com mais de 60 dias
-        return ageInMs <= SIXTY_DAYS_IN_MS;
-    });
+
+        // Regra 1: Remove o post completamente se for muito antigo (ex: > 90 dias)
+        if (ageInMs > NINETY_DAYS_IN_MS) {
+            return null; // Será filtrado posteriormente
+        }
+
+        // Regra 2: Para posts que não serão deletados, verifica se devemos remover a mídia
+        // Mantemos a mídia para os N posts publicados mais recentes.
+        if (index >= MAX_PUBLISHED_POSTS_WITH_MEDIA && post.media.length > 0) {
+            // Cria uma cópia do post e limpa sua mídia para economizar espaço
+            return { ...post, media: [] };
+        }
+
+        // Mantém o post como está (é recente o suficiente para manter a mídia)
+        return post;
+    }).filter((p): p is Post => p !== null); // Filtra os posts nulos (deletados)
+
+    // Combina os posts agendados com os posts publicados já limpos
+    return [...scheduledPosts, ...cleanedPublishedPosts];
 };
+
 
 function usePostsStorage(key: string, initialValue: Post[]): [Post[], Dispatch<SetStateAction<Post[]>>] {
     const [posts, setPostsInternal] = useState<Post[]>(() => {
@@ -25,9 +47,8 @@ function usePostsStorage(key: string, initialValue: Post[]): [Post[], Dispatch<S
             
             const cleanedPosts = cleanupOldPosts(loadedPosts);
 
-            // Se a limpeza ocorreu no carregamento, atualize o localStorage imediatamente
-            if (loadedPosts.length > cleanedPosts.length) {
-                console.log(`Removidos ${loadedPosts.length - cleanedPosts.length} posts antigos publicados na inicialização.`);
+            if (loadedPosts.length !== cleanedPosts.length) {
+                console.log(`Posts otimizados no carregamento inicial.`);
                 window.localStorage.setItem(key, JSON.stringify(cleanedPosts));
             }
             return cleanedPosts;
@@ -37,27 +58,21 @@ function usePostsStorage(key: string, initialValue: Post[]): [Post[], Dispatch<S
         }
     });
 
-    const setPosts = useCallback((value: Post[] | ((val: Post[]) => Post[])) => {
+    const setPosts = (value: Post[] | ((val: Post[]) => Post[])) => {
         setPostsInternal(currentPosts => {
             const postsToStore = value instanceof Function ? value(currentPosts) : value;
-            const cleanedPosts = cleanupOldPosts(postsToStore);
+            const cleanedPosts = cleanupOldPosts(postsToStore); // Sempre otimiza antes de salvar
 
-            if (postsToStore.length > cleanedPosts.length) {
-                console.log(`Removidos ${postsToStore.length - cleanedPosts.length} posts antigos publicados ao salvar.`);
-            }
-            
             try {
                 window.localStorage.setItem(key, JSON.stringify(cleanedPosts));
             } catch (error) {
                 console.error("Falha ao salvar posts no localStorage:", error);
-                // Não atualize o estado se o armazenamento falhar, para evitar inconsistência de dados
-                alert("Ocorreu um erro ao salvar suas postagens. O armazenamento pode estar cheio.");
-                return currentPosts; 
+                alert("Ocorreu um erro ao salvar sua postagem. O armazenamento do navegador pode estar cheio. Para liberar espaço, o aplicativo otimiza posts mais antigos. Se o erro persistir, tente remover posts com muitas imagens ou vídeos.");
+                return currentPosts; // Aborta a atualização do estado em caso de falha
             }
             return cleanedPosts;
         });
-    // Fix: Added setPostsInternal to the dependency array as it's used within the callback.
-    }, [key, setPostsInternal]);
+    };
 
     return [posts, setPosts as Dispatch<SetStateAction<Post[]>>];
 }

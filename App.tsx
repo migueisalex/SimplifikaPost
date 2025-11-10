@@ -106,28 +106,23 @@ const App: React.FC = () => {
     setIsModalOpen(false);
   }, []);
 
-  // Removido useCallback para garantir que a função sempre capture o estado mais recente
-  // de `posts` e `usage`, eliminando a possibilidade de um "stale closure".
   const handleSavePost = (postData: Post) => {
-    setPosts(prevPosts => {
-      const postIndex = prevPosts.findIndex(p => p.id === postData.id);
-
-      if (postIndex > -1) {
-        // ID encontrado: é uma edição.
-        const updatedPosts = [...prevPosts];
-        updatedPosts[postIndex] = postData;
-        return updatedPosts;
-      } else {
-        // ID não encontrado: é um novo post (ou um clone).
-        if (!canCreatePost) {
-          handleUpgradeRequest("post_limit");
-          return prevPosts; // Retorna o estado anterior sem modificação.
-        }
-        incrementPostCount();
-        return [...prevPosts, postData];
+    // A lógica agora se baseia em `editingPost` para determinar a ação,
+    // o que é mais robusto contra condições de corrida.
+    if (editingPost && postData.id === editingPost.id) {
+      // É uma edição de um post existente.
+      setPosts(prevPosts =>
+        prevPosts.map(p => (p.id === postData.id ? postData : p))
+      );
+    } else {
+      // É um post novo ou um clone. Ambos os casos contam como uma nova criação.
+      if (!canCreatePost) {
+        handleUpgradeRequest("post_limit");
+        return; // Retorna sem salvar.
       }
-    });
-    
+      incrementPostCount();
+      setPosts(prevPosts => [...prevPosts, postData]);
+    }
     handleCloseModal();
   };
   
@@ -146,7 +141,6 @@ const App: React.FC = () => {
     setGroupToDeleteId(id); // Set ID to trigger confirmation modal
   };
 
-  // Removido useCallback para garantir que a função sempre capture o estado mais recente.
   const handleClonePost = (postToClone: Post) => {
     if (!canCreatePost) {
         handleUpgradeRequest("post_limit");
@@ -159,8 +153,9 @@ const App: React.FC = () => {
       status: 'scheduled' as const,
     };
     
-    // Abre o modal com o post clonado. A lógica em handleSavePost
-    // irá tratá-lo como um novo post porque seu ID é novo.
+    // Abre o modal com o post clonado. `editingPost` será definido para `clonedPost`.
+    // `handleSavePost` irá tratá-lo como um novo post porque seu ID não corresponde
+    // ao ID do `editingPost` original (ele tem um novo ID) e não está na lista principal.
     handleOpenModal(clonedPost);
   };
   

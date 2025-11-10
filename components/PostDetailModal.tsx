@@ -15,7 +15,6 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose, onEdit
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isPast = new Date(post.scheduledAt) < new Date();
-  // FIX: Add state to manage the current index for the carousel.
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
 
   useEffect(() => {
@@ -91,7 +90,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose, onEdit
                  <CarouselPreview 
                     media={post.media}
                     aspectRatio={post.media.length > 0 ? post.media[0].aspectRatio : 1}
-                    onEdit={() => onEdit(post)} // Clicking edit on carousel in view mode should open the main editor
+                    onEdit={() => onEdit(post)}
                     onRemove={() => {}} // Remove is disabled in view-only mode
                     currentIndex={currentMediaIndex}
                     onCurrentIndexChange={setCurrentMediaIndex}
