@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { UserData, PaymentData, Subscription, PackageTier } from '../types';
 import LoadingSpinner from './LoadingSpinner';
-import { GoogleGenAI } from "@google/genai";
-import GeminiIcon from './GeminiIcon';
 
 interface ProfileModalProps {
   initialUserData: UserData;

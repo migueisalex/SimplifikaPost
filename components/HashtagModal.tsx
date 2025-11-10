@@ -1,3 +1,5 @@
+// FIX: Add reference to Vite client types to resolve TypeScript error for import.meta.env
+/// <reference types="vite/client" />
 import React, { useState } from 'react';
 import { HashtagGroup } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -39,8 +41,13 @@ const HashtagModal: React.FC<HashtagModalProps> = ({ onSave, onClose, postConten
     setSuggestedHashtags([]);
 
     try {
-      // FIX: Use process.env.API_KEY as per the guidelines.
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = import.meta.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        setAiError("A chave da API não foi configurada. Entre em contato com o suporte.");
+        setIsLoading(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const prompt = `Baseado no seguinte texto de um post para redes sociais, gere 4 conjuntos distintos de hashtags otimizadas para engajamento. Cada conjunto deve ser uma única string de texto, com hashtags separadas por espaço. O texto é: "${postContent}"`;
       
       const response = await ai.models.generateContent({

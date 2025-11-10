@@ -1,3 +1,5 @@
+// FIX: Add reference to Vite client types to resolve TypeScript error for import.meta.env
+/// <reference types="vite/client" />
 import React, { useState } from 'react';
 import { GoogleGenAI, Modality } from "@google/genai";
 import LoadingSpinner from './LoadingSpinner';
@@ -24,8 +26,13 @@ const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({ isOpen, onC
     setError(null);
 
     try {
-      // FIX: Use process.env.API_KEY as per the guidelines.
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = import.meta.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        setError("A chave da API não foi configurada. Entre em contato com o suporte.");
+        setIsLoading(false);
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
         contents: {

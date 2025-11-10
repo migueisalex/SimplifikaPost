@@ -1,3 +1,5 @@
+// FIX: Add reference to Vite client types to resolve TypeScript error for import.meta.env
+/// <reference types="vite/client" />
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { Suggestion } from '../types';
@@ -24,8 +26,13 @@ const SuggestionsModal: React.FC<SuggestionsModalProps> = ({ isOpen, onClose, or
         setSuggestions([]);
 
         try {
-          // FIX: Use process.env.API_KEY as per the guidelines.
-          const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+          const apiKey = import.meta.env.GEMINI_API_KEY;
+          if (!apiKey) {
+            setError("A chave da API não foi configurada. Entre em contato com o suporte.");
+            setIsLoading(false);
+            return;
+          }
+          const ai = new GoogleGenAI({ apiKey });
           
           const prompt = `Você é um especialista em marketing de redes sociais. Transforme o seguinte texto em 3 versões de copy's profissionais, envolventes e otimizadas para engajamento. Mantenha a essência da mensagem original. Dê um título criativo para cada versão. IMPORTANTE: Não inclua nenhuma hashtag no texto da copy. O texto original é: "${originalText}"`;
 

@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useState, useEffect, useCallback } from 'react';
 import { Post, Platform, PostType, MediaItem, HashtagGroup } from '../types';
 import { PlatformIcons } from './PlatformIcons';
