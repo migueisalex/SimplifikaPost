@@ -52,6 +52,12 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ mediaItem, aspectRatio, onS
   const [imageInitialDims, setImageInitialDims] = useState({ width: 0, height: 0 });
   
   const [edits, setEdits] = useState(mediaItem.edits || defaultEdits);
+  
+  const [openSection, setOpenSection] = useState<'crop' | 'adjustments' | 'filters' | null>('crop');
+
+  const toggleSection = (section: 'crop' | 'adjustments' | 'filters') => {
+    setOpenSection(prev => (prev === section ? null : section));
+  };
 
   const getBoundedPosition = useCallback((x: number, y: number, currentZoom: number, currentWidthScale: number, currentHeightScale: number) => {
     const cropBox = cropBoxRef.current;
@@ -300,43 +306,89 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ mediaItem, aspectRatio, onS
           </div>
 
           <div className="w-full md:w-80 flex-shrink-0 bg-gray-50 dark:bg-dark-card border-l dark:border-dark-border flex flex-col">
-              <div className="flex-grow p-4 space-y-4 overflow-y-auto">
-                <h4 className="font-semibold text-gray-800 dark:text-white">Recorte & Zoom</h4>
-                <AdjustmentSlider label="Zoom" value={Math.round(zoom * 100)} onChange={v => handleZoomChange(v / 100)} min={Math.round(initialState.zoom * 100)} max={Math.round(initialState.zoom * 400)} />
-                <AdjustmentSlider label="Escala H" value={Math.round(widthScale * 100)} onChange={v => handleWidthChange(v/100)} min={50} max={200} />
-                <AdjustmentSlider label="Escala V" value={Math.round(heightScale * 100)} onChange={v => handleHeightChange(v/100)} min={50} max={200} />
+              <div className="flex-grow overflow-y-auto md:p-4 md:space-y-4">
+                  {/* Section 1: Crop & Zoom */}
+                  <div className="md:space-y-4">
+                      <h4 className="hidden md:block font-semibold text-gray-800 dark:text-white">Recorte & Zoom</h4>
+                       <button
+                          type="button"
+                          onClick={() => toggleSection('crop')}
+                          className="flex md:hidden items-center justify-between w-full p-4 font-semibold text-left text-gray-800 dark:text-white border-b dark:border-dark-border"
+                          aria-expanded={openSection === 'crop'}
+                      >
+                          <span>Recorte & Zoom</span>
+                          <svg className={`w-4 h-4 transform transition-transform ${openSection === 'crop' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                      </button>
+                      <div className={`p-4 md:p-0 space-y-4 md:block ${openSection === 'crop' ? 'block' : 'hidden'}`}>
+                          <AdjustmentSlider label="Zoom" value={Math.round(zoom * 100)} onChange={v => handleZoomChange(v / 100)} min={Math.round(initialState.zoom * 100)} max={Math.round(initialState.zoom * 400)} />
+                          <AdjustmentSlider label="Escala H" value={Math.round(widthScale * 100)} onChange={v => handleWidthChange(v/100)} min={50} max={200} />
+                          <AdjustmentSlider label="Escala V" value={Math.round(heightScale * 100)} onChange={v => handleHeightChange(v/100)} min={50} max={200} />
+                      </div>
+                  </div>
 
-                <div className="pt-2 border-t dark:border-dark-border">
-                  <h4 className="font-semibold text-gray-800 dark:text-white">Ajustes</h4>
-                  <AdjustmentSlider label="Brilho" value={edits.brightness} onChange={v => setEdits({...edits, brightness: v})} />
-                  <AdjustmentSlider label="Contraste" value={edits.contrast} onChange={v => setEdits({...edits, contrast: v})} />
-                  <AdjustmentSlider label="Saturação" value={edits.saturate} onChange={v => setEdits({...edits, saturate: v})} />
-                  <AdjustmentSlider label="Desfoque" value={edits.blur} onChange={v => setEdits({...edits, blur: v})} min={0} max={10} />
-                </div>
+                  {/* Section 2: Adjustments */}
+                  <div className="md:pt-4 md:mt-4 md:border-t md:dark:border-dark-border">
+                      <h4 className="hidden md:block font-semibold text-gray-800 dark:text-white">Ajustes</h4>
+                      <button
+                          type="button"
+                          onClick={() => toggleSection('adjustments')}
+                          className="flex md:hidden items-center justify-between w-full p-4 font-semibold text-left text-gray-800 dark:text-white border-b dark:border-dark-border"
+                          aria-expanded={openSection === 'adjustments'}
+                      >
+                          <span>Ajustes</span>
+                          <svg className={`w-4 h-4 transform transition-transform ${openSection === 'adjustments' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                      </button>
+                      <div className={`p-4 md:p-0 space-y-4 md:block ${openSection === 'adjustments' ? 'block' : 'hidden'}`}>
+                          <AdjustmentSlider label="Brilho" value={edits.brightness} onChange={v => setEdits({...edits, brightness: v})} />
+                          <AdjustmentSlider label="Contraste" value={edits.contrast} onChange={v => setEdits({...edits, contrast: v})} />
+                          <AdjustmentSlider label="Saturação" value={edits.saturate} onChange={v => setEdits({...edits, saturate: v})} />
+                          <AdjustmentSlider label="Desfoque" value={edits.blur} onChange={v => setEdits({...edits, blur: v})} min={0} max={10} />
+                      </div>
+                  </div>
                  
-                <div className="pt-2 border-t dark:border-dark-border">
-                    <h4 className="font-semibold text-gray-800 dark:text-white mb-2">Filtros</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => setEdits(prev => ({...prev, filter: 'none'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'none' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Normal</button>
-                        <button onClick={() => setEdits(prev => ({...prev, filter: 'grayscale'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'grayscale' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Preto e Branco</button>
-                        <button onClick={() => setEdits(prev => ({...prev, filter: 'sepia'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'sepia' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Sépia</button>
-                        <button onClick={() => setEdits(prev => ({...prev, filter: 'invert'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'invert' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Inverter</button>
-                    </div>
-                </div>
+                  {/* Section 3: Filters */}
+                  <div className="md:pt-4 md:mt-4 md:border-t md:dark:border-dark-border">
+                      <h4 className="hidden md:block font-semibold text-gray-800 dark:text-white mb-2">Filtros</h4>
+                      <button
+                          type="button"
+                          onClick={() => toggleSection('filters')}
+                          className="flex md:hidden items-center justify-between w-full p-4 font-semibold text-left text-gray-800 dark:text-white"
+                          aria-expanded={openSection === 'filters'}
+                      >
+                          <span>Filtros</span>
+                          <svg className={`w-4 h-4 transform transition-transform ${openSection === 'filters' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                      </button>
+                      <div className={`p-4 md:p-0 md:block ${openSection === 'filters' ? 'block' : 'hidden'}`}>
+                          <div className="grid grid-cols-2 gap-2">
+                              <button onClick={() => setEdits(prev => ({...prev, filter: 'none'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'none' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Normal</button>
+                              <button onClick={() => setEdits(prev => ({...prev, filter: 'grayscale'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'grayscale' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Preto e Branco</button>
+                              <button onClick={() => setEdits(prev => ({...prev, filter: 'sepia'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'sepia' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Sépia</button>
+                              <button onClick={() => setEdits(prev => ({...prev, filter: 'invert'}))} className={`p-2 text-sm font-semibold rounded-md border-2 ${edits.filter === 'invert' ? 'border-brand-primary' : 'border-transparent'} hover:border-brand-secondary transition`}>Inverter</button>
+                          </div>
+                      </div>
+                  </div>
               </div>
           </div>
         </div>
         
-        <div className="bg-gray-100 dark:bg-gray-900/50 px-6 py-3 flex justify-between items-center rounded-b-lg border-t dark:border-dark-border">
-            <button onClick={handleResetAll} className="py-2 px-4 text-sm bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-              Restaurar Padrões
+        <div className="bg-gray-100 dark:bg-gray-900/50 px-4 py-3 flex justify-between items-center rounded-b-lg border-t dark:border-dark-border">
+            <button onClick={handleResetAll} className="py-2 px-4 text-sm bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition whitespace-nowrap">
+              <span className="md:hidden">Restaurar</span>
+              <span className="hidden md:inline">Restaurar Padrões</span>
             </button>
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-end gap-2 md:gap-4">
               <button onClick={onCancel} className="py-2 px-4 bg-gray-200 dark:bg-dark-border text-gray-800 dark:text-gray-200 font-semibold rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
                 Cancelar
               </button>
-              <button onClick={handleSave} className="py-2 px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition">
-                Salvar Alterações
+              <button onClick={handleSave} className="py-2 px-4 md:px-6 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-secondary shadow-md transition whitespace-nowrap">
+                <span className="md:hidden">Salvar</span>
+                <span className="hidden md:inline">Salvar Alterações</span>
               </button>
             </div>
         </div>

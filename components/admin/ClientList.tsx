@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Client, ClientStatus } from '../../types';
+import { Client, ClientStatus, UserRole } from '../../types';
 
 interface ClientListProps {
     clients: Client[];
     setClients: React.Dispatch<React.SetStateAction<Client[]>>;
     onViewClient: (client: Client) => void;
+    userRole: UserRole;
 }
 
 const statusConfig = {
@@ -14,7 +15,7 @@ const statusConfig = {
     [ClientStatus.IN_DEFAULT]: { text: 'Inadimplente', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
 };
 
-const ClientList: React.FC<ClientListProps> = ({ clients, setClients, onViewClient }) => {
+const ClientList: React.FC<ClientListProps> = ({ clients, setClients, onViewClient, userRole }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<ClientStatus | 'all'>('all');
 
@@ -38,6 +39,8 @@ const ClientList: React.FC<ClientListProps> = ({ clients, setClients, onViewClie
 
         setClients(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
     };
+
+    const isFinanceiro = userRole === 'financeiro';
 
     return (
         <div className="bg-white dark:bg-dark-card p-4 sm:p-6 rounded-lg shadow-lg">
@@ -90,15 +93,17 @@ const ClientList: React.FC<ClientListProps> = ({ clients, setClients, onViewClie
                                     <div className="flex justify-end items-center gap-2">
                                         <button 
                                             onClick={() => toggleStatus(client.id, client.status, 'pause')}
-                                            className="p-2 text-xs font-semibold rounded-md bg-yellow-400 hover:bg-yellow-500 text-yellow-900 transition"
-                                            title={client.status === ClientStatus.PAUSED ? 'Reativar' : 'Pausar'}
+                                            disabled={isFinanceiro}
+                                            className="p-2 text-xs font-semibold rounded-md bg-yellow-400 hover:bg-yellow-500 text-yellow-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={isFinanceiro ? "Ação não permitida" : (client.status === ClientStatus.PAUSED ? 'Reativar' : 'Pausar')}
                                         >
                                             {client.status === ClientStatus.PAUSED ? 'Reativar' : 'Pausar'}
                                         </button>
                                         <button 
                                             onClick={() => toggleStatus(client.id, client.status, 'block')}
-                                            className="p-2 text-xs font-semibold rounded-md bg-red-500 hover:bg-red-600 text-white transition"
-                                            title={client.status === ClientStatus.BLOCKED ? 'Desbloquear' : 'Bloquear'}
+                                            disabled={isFinanceiro}
+                                            className="p-2 text-xs font-semibold rounded-md bg-red-500 hover:bg-red-600 text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={isFinanceiro ? "Ação não permitida" : (client.status === ClientStatus.BLOCKED ? 'Desbloquear' : 'Bloquear')}
                                         >
                                            {client.status === ClientStatus.BLOCKED ? 'Desbloquear' : 'Bloquear'}
                                         </button>

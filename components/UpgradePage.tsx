@@ -25,7 +25,8 @@ const UpgradePage: React.FC<UpgradePageProps> = ({ onUpgradeSuccess }) => {
   const [error, setError] = useState('');
   
   // Data states from localStorage
-  const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '' });
+  // FIX: Added missing 'role' property to satisfy the UserData type.
+  const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '', role: 'user' });
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', { cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: '' });
   const [subscription, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
   

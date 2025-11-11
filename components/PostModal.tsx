@@ -247,7 +247,8 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    // FIX: Explicitly type `files` as `File[]` to give `file` the correct type in the loop.
+    const files: File[] = Array.from(e.target.files || []);
     if (!files.length) return;
 
     const spaceAvailable = 10 - media.length;
@@ -568,14 +569,14 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                                 }
                                 handlePlatformToggle(platform);
                             }}
-                            title={!isAllowed ? "Faça upgrade para usar esta plataforma" : ""}
-                            className={`flex items-center gap-2 py-2 px-3 rounded-full border-2 transition-all duration-200 text-sm font-semibold
+                            title={!isAllowed ? "Faça upgrade para usar esta plataforma" : platform}
+                            className={`flex items-center justify-center gap-2 p-3 sm:py-2 sm:px-3 rounded-full border-2 transition-all duration-200 text-sm font-semibold
                                 ${platforms.includes(platform) ? 'bg-brand-primary border-brand-primary text-white' : 'bg-transparent border-gray-300 dark:border-dark-border text-gray-500 dark:text-gray-300'}
-                                ${isAllowed ? 'hover:border-brand-secondary hover:bg-brand-light dark:hover:bg-brand-primary/10' : 'opacity-50'}
+                                ${isAllowed ? 'sm:hover:border-brand-secondary sm:hover:bg-brand-light dark:sm:hover:bg-brand-primary/10' : 'opacity-50'}
                             `}
                             >
                             {PlatformIcons[platform]}
-                            {platform}
+                            <span className="hidden sm:inline">{platform}</span>
                             </button>
                         )
                     })}

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, lazy, Suspense } from 'react';
-import { Post, View, Platform, HashtagGroup, UserData, PaymentData, Subscription } from './types';
+import { Post, View, Platform, HashtagGroup, UserData, PaymentData, Subscription, UserRole, StaffMember } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import usePostsStorage from './hooks/usePostsStorage';
 import { useUsageTracker } from './hooks/useUsageTracker';
@@ -17,7 +17,7 @@ import UpgradeModal from './components/UpgradeModal';
 import LoadingSpinner from './components/LoadingSpinner';
 
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
-
+const StaffManagementModal = lazy(() => import('./components/admin/StaffManagementModal'));
 
 const App: React.FC = () => {
   const [posts, setPosts] = usePostsStorage('social-scheduler-posts', []);
@@ -35,19 +35,13 @@ const App: React.FC = () => {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState('');
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
 
 
-  const [isAuthenticated, setIsAuthenticated] = useLocalStorage('social-scheduler-auth', false);
-  const [isAdmin, setIsAdmin] = useLocalStorage('social-scheduler-is-admin', false);
+  const [currentUser, setCurrentUser] = useLocalStorage<UserData | null>('social-scheduler-current-user', null);
+  const [staff, setStaff] = useLocalStorage<StaffMember[]>('admin-staff-list', []);
   const [hasSkippedConnectionStep, setHasSkippedConnectionStep] = useLocalStorage('social-scheduler-skipped-connection', false);
   const [connectedPlatforms, setConnectedPlatforms] = useLocalStorage<Platform[]>('social-scheduler-connected-platforms', []);
-  const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', {
-    fullName: '',
-    email: 'usuario@simplifika.post',
-    birthDate: '',
-    geminiApiKey: '',
-    geminiApiKeyTestStatus: 'untested',
-  });
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', {
     cpf: '',
     cep: '',
@@ -109,18 +103,18 @@ const App: React.FC = () => {
   }, []);
 
   const handleSavePost = (postData: Post) => {
-    // A lógica agora se baseia em `editingPost` para determinar a ação,
-    // o que é mais robusto contra condições de corrida.
-    if (editingPost && postData.id === editingPost.id) {
-      // É uma edição de um post existente.
+    const isExistingPost = posts.some(p => p.id === postData.id);
+    
+    if (isExistingPost) {
+      // This is a true edit of an existing post.
       setPosts(prevPosts =>
         prevPosts.map(p => (p.id === postData.id ? postData : p))
       );
     } else {
-      // É um post novo ou um clone. Ambos os casos contam como uma nova criação.
+      // This is a new post (either from scratch or a clone).
       if (!canCreatePost) {
         handleUpgradeRequest("post_limit");
-        return; // Retorna sem salvar.
+        return;
       }
       incrementPostCount();
       setPosts(prevPosts => [...prevPosts, postData]);
@@ -139,8 +133,8 @@ const App: React.FC = () => {
   };
   
   const handleDeleteHashtagGroup = (id: string) => {
-    setIsDeleteGroupModalOpen(false); // Close list modal
-    setGroupToDeleteId(id); // Set ID to trigger confirmation modal
+    setIsDeleteGroupModalOpen(false);
+    setGroupToDeleteId(id);
   };
 
   const handleClonePost = (postToClone: Post) => {
@@ -155,9 +149,6 @@ const App: React.FC = () => {
       status: 'scheduled' as const,
     };
     
-    // Abre o modal com o post clonado. `editingPost` será definido para `clonedPost`.
-    // `handleSavePost` irá tratá-lo como um novo post porque seu ID não corresponde
-    // ao ID do `editingPost` original (ele tem um novo ID) e não está na lista principal.
     handleOpenModal(clonedPost);
   };
   
@@ -199,37 +190,64 @@ const App: React.FC = () => {
   const sortedPosts = [...posts].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
+    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'financeiro')) {
+        setStaff(prevStaff => {
+            return prevStaff.map(member => {
+                if (member.email === currentUser.email) {
+                    const lastLogIndex = member.accessLogs.length - 1;
+                    if (lastLogIndex >= 0 && !member.accessLogs[lastLogIndex].logoutTime) {
+                        const updatedLogs = [...member.accessLogs];
+                        updatedLogs[lastLogIndex] = {
+                            ...updatedLogs[lastLogIndex],
+                            logoutTime: new Date().toISOString()
+                        };
+                        return { ...member, accessLogs: updatedLogs };
+                    }
+                }
+                return member;
+            });
+        });
+    }
+
+    setCurrentUser(null);
     setHasSkippedConnectionStep(false);
     setConnectedPlatforms([]);
-    setPosts([]); // Clear posts on logout
-    setIsAdmin(false);
+    setPosts([]);
     setSubscription(null);
-    // Clearing other user data might be a good idea too
-    setUserData({ fullName: '', email: '', birthDate: '' });
     setPaymentData({ cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: '' });
-    localStorage.removeItem('social-user-email');
+    localStorage.removeItem('social-scheduler-user-data');
     localStorage.removeItem('social-scheduler-usage');
   }
   
-  const handleLoginSuccess = (newSubscription?: Subscription) => {
-    if (newSubscription) {
-      setSubscription(newSubscription);
-    }
-    setIsAuthenticated(true);
+  const handleLoginSuccess = (user: UserData, newSubscription: Subscription) => {
+    setCurrentUser(user);
+    setSubscription(newSubscription);
   };
 
-  const handleAdminLogin = () => {
-    setIsAdmin(true);
-    setIsAuthenticated(true); // Admin is also an authenticated user
+  const handleAdminLogin = (email: string, role: 'admin' | 'financeiro') => {
+     setCurrentUser({
+        fullName: role === 'admin' ? 'Admin Master' : 'Usuário Financeiro',
+        email: email,
+        birthDate: '',
+        role: role,
+    });
+     setStaff(prevStaff => {
+        return prevStaff.map(member => {
+            if (member.email === email) {
+                const newLog = { loginTime: new Date().toISOString() };
+                return { ...member, accessLogs: [...member.accessLogs, newLog] };
+            }
+            return member;
+        });
+    });
   };
 
   const handleTestUserLogin = () => {
-    // Pre-populate data for the test user
-    setUserData({
+    setCurrentUser({
         fullName: 'Usuário de Teste',
         email: 'teste@gmail.com',
         birthDate: '2000-01-01',
+        role: 'user',
     });
     setPaymentData({
         cpf: '123.456.789-00',
@@ -246,12 +264,6 @@ const App: React.FC = () => {
         package: 3,
         hasAiAddon: true,
     });
-    
-    // Set the separate email item used by the regular login flow for consistency
-    localStorage.setItem('social-user-email', 'teste@gmail.com');
-    
-    // Log the user in and skip connection step for convenience
-    setIsAuthenticated(true);
     setConnectedPlatforms(Object.values(Platform));
     setHasSkippedConnectionStep(true);
   };
@@ -268,17 +280,17 @@ const App: React.FC = () => {
         setSubscription(newSub);
         setIsUpgrading(false);
     }} />;
-  } else if (isAdmin) {
+  } else if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'financeiro')) {
     pageContent = (
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg">
           <LoadingSpinner />
         </div>
       }>
-        <AdminPanel onLogout={handleLogout} />
+        <AdminPanel userRole={currentUser.role} onLogout={handleLogout} onOpenSettings={() => setIsStaffModalOpen(true)} />
       </Suspense>
     );
-  } else if (!isAuthenticated) {
+  } else if (!currentUser) {
     pageContent = <AuthPage 
         onLoginSuccess={handleLoginSuccess} 
         onAdminLoginSuccess={handleAdminLogin}
@@ -379,7 +391,7 @@ const App: React.FC = () => {
             canGenerateText={canGenerateText}
             incrementAiGenerationCount={incrementAiGenerationCount}
             incrementImageGenerationCount={incrementImageGenerationCount}
-            userApiKey={userData.geminiApiKey}
+            userApiKey={currentUser?.geminiApiKey}
           />
         )}
         
@@ -420,15 +432,15 @@ const App: React.FC = () => {
           confirmButtonText="Excluir Definitivamente"
         />
 
-        {isProfileModalOpen && (
+        {isProfileModalOpen && currentUser && (
           <ProfileModal 
-            initialUserData={userData}
+            initialUserData={currentUser}
             initialPaymentData={paymentData}
             initialSubscription={subscription || { package: 0, hasAiAddon: false }}
             usageData={usage}
             isFreemium={isFreemiumPlan}
             onSave={(newUserData, newPaymentData, newSubscription) => {
-              setUserData(newUserData);
+              setCurrentUser(newUserData);
               setPaymentData(newPaymentData);
               if(newSubscription) setSubscription(newSubscription);
             }}
@@ -454,6 +466,14 @@ const App: React.FC = () => {
             onUpgrade={handleConfirmUpgrade}
             reason={upgradeReason}
         />
+      )}
+      {isStaffModalOpen && (
+         <Suspense fallback={<div />}>
+            <StaffManagementModal
+                isOpen={isStaffModalOpen}
+                onClose={() => setIsStaffModalOpen(false)}
+            />
+         </Suspense>
       )}
     </>
   );

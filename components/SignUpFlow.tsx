@@ -4,7 +4,7 @@ import useLocalStorage from '../hooks/useLocalStorage';
 import LoadingSpinner from './LoadingSpinner';
 
 interface SignUpFlowProps {
-  onSignUpSuccess: (subscription: Subscription) => void;
+  onRegistrationPending: (email: string) => void;
   onBackToLogin: () => void;
 }
 
@@ -21,15 +21,15 @@ const brazilianStates = [
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin }) => {
+const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackToLogin }) => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   
   // Data states
   const [accountData, setAccountData] = useState({ email: '', password: '', confirmPassword: '' });
   const [subscriptionData, setSubscriptionData] = useState<Subscription>({ package: 1, hasAiAddon: false });
-  const [userData, setUserData] = useLocalStorage<UserData>('social-scheduler-user-data', { fullName: '', email: '', birthDate: '' });
-  const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', { cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: '' });
+  const [, setUserData] = useLocalStorage<UserData | null>('social-scheduler-user-data', null);
+  const [paymentData, setPaymentData] = useLocalStorage<PaymentData | null>('social-scheduler-payment-data', null);
   const [, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
   // CEP states
@@ -57,18 +57,24 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
   
   const handleFinalSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      // Basic validation
-      if (!userData.fullName || !paymentData.cpf || !paymentData.cep || !paymentData.address || !paymentData.number || !paymentData.city || !paymentData.state) {
+      if (!paymentData || !paymentData.fullName || !paymentData.cpf || !paymentData.cep || !paymentData.address || !paymentData.number || !paymentData.city || !paymentData.state) {
           setError("Por favor, preencha todos os campos de pagamento obrigatórios.");
           return;
       }
-      // Save all data
-      localStorage.setItem('social-user-email', accountData.email);
-      setUserData(prev => ({ ...prev, email: accountData.email }));
+
+      const finalUserData: UserData = {
+          fullName: paymentData.fullName,
+          email: accountData.email,
+          birthDate: paymentData.birthDate || '',
+          role: 'user',
+      };
+
+      setUserData(finalUserData);
       setSubscription(subscriptionData);
       
-      // Simulate successful signup and login, passing subscription data up
-      onSignUpSuccess(subscriptionData);
+      // Simulação: Após salvar, redireciona para a verificação de email
+      alert("Conta criada! Enviamos um código de verificação para o seu e-mail.");
+      onRegistrationPending(accountData.email);
   }
 
   const handleFreemiumSubmit = () => {
@@ -79,22 +85,19 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
         return;
       }
       
-      localStorage.setItem('social-user-email', accountData.email);
-      
-      setUserData({
+      const freemiumUserData: UserData = {
           fullName: 'Usuário Freemium',
           email: accountData.email,
           birthDate: '',
-      });
-
-      setPaymentData({
-          cpf: '', cep: '', address: '', number: '', complement: '', district: '', city: '', state: '', cardNumber: ''
-      });
+          role: 'user',
+      };
+      setUserData(freemiumUserData);
       
-      const freemiumSubscription = { package: 0 as PackageTier, hasAiAddon: false };
+      const freemiumSubscription: Subscription = { package: 0, hasAiAddon: false };
       setSubscription(freemiumSubscription);
       
-      onSignUpSuccess(freemiumSubscription);
+      alert("Conta Freemium criada! Enviamos um código de verificação para o seu e-mail.");
+      onRegistrationPending(accountData.email);
   };
 
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
@@ -113,7 +116,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
       if (data.erro) {
         setCepError('CEP não encontrado.');
       } else {
-        setPaymentData(prev => ({ ...prev, address: data.logradouro, district: data.bairro, city: data.localidade, state: data.uf }));
+        setPaymentData(prev => ({ ...prev!, address: data.logouro, district: data.bairro, city: data.localidade, state: data.uf }));
       }
     } catch (error) {
       setCepError('Erro ao buscar CEP.');
@@ -175,27 +178,27 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
       <h2 className="text-2xl font-bold text-center mb-1">Informações de Pagamento</h2>
       <p className="text-center text-gray-500 mb-6">Estamos quase lá! Preencha seus dados.</p>
       <div className="space-y-4">
-        <input type="text" placeholder="Nome Completo" value={userData.fullName} onChange={e => setUserData({...userData, fullName: e.target.value})} className="w-full p-2 border rounded" required/>
-        <input type="text" placeholder="CPF" value={paymentData.cpf} onChange={e => setPaymentData({...paymentData, cpf: e.target.value})} className="w-full p-2 border rounded" required/>
+        <input type="text" placeholder="Nome Completo" value={paymentData?.fullName || ''} onChange={e => setPaymentData({...paymentData!, fullName: e.target.value})} className="w-full p-2 border rounded" required/>
+        <input type="text" placeholder="CPF" value={paymentData?.cpf || ''} onChange={e => setPaymentData({...paymentData!, cpf: e.target.value})} className="w-full p-2 border rounded" required/>
         <div className="relative">
-            <input type="text" placeholder="CEP" value={paymentData.cep} onChange={e => setPaymentData({...paymentData, cep: e.target.value})} onBlur={handleCepBlur} className="w-full p-2 border rounded" required/>
+            <input type="text" placeholder="CEP" value={paymentData?.cep || ''} onChange={e => setPaymentData({...paymentData!, cep: e.target.value})} onBlur={handleCepBlur} className="w-full p-2 border rounded" required/>
             {isCepLoading && <div className="absolute right-2 top-2"><LoadingSpinner className="w-5 h-5"/></div>}
             {cepError && <p className="text-red-500 text-xs mt-1">{cepError}</p>}
         </div>
-        <input type="text" placeholder="Endereço" value={paymentData.address} onChange={e => setPaymentData({...paymentData, address: e.target.value})} className="w-full p-2 border rounded" required/>
+        <input type="text" placeholder="Endereço" value={paymentData?.address || ''} onChange={e => setPaymentData({...paymentData!, address: e.target.value})} className="w-full p-2 border rounded" required/>
         <div className="grid grid-cols-3 gap-2">
-            <input type="text" placeholder="Número" value={paymentData.number} onChange={e => setPaymentData({...paymentData, number: e.target.value})} className="p-2 border rounded" required/>
-            <input type="text" placeholder="Complemento (Opcional)" value={paymentData.complement} onChange={e => setPaymentData({...paymentData, complement: e.target.value})} className="col-span-2 p-2 border rounded" />
+            <input type="text" placeholder="Número" value={paymentData?.number || ''} onChange={e => setPaymentData({...paymentData!, number: e.target.value})} className="p-2 border rounded" required/>
+            <input type="text" placeholder="Complemento (Opcional)" value={paymentData?.complement || ''} onChange={e => setPaymentData({...paymentData!, complement: e.target.value})} className="col-span-2 p-2 border rounded" />
         </div>
          <div className="grid grid-cols-3 gap-2">
-            <input type="text" placeholder="Bairro" value={paymentData.district} onChange={e => setPaymentData({...paymentData, district: e.target.value})} className="p-2 border rounded" required/>
-            <input type="text" placeholder="Cidade" value={paymentData.city} onChange={e => setPaymentData({...paymentData, city: e.target.value})} className="p-2 border rounded" required/>
-            <select value={paymentData.state} onChange={e => setPaymentData({...paymentData, state: e.target.value})} className="p-2 border rounded" required>
+            <input type="text" placeholder="Bairro" value={paymentData?.district || ''} onChange={e => setPaymentData({...paymentData!, district: e.target.value})} className="p-2 border rounded" required/>
+            <input type="text" placeholder="Cidade" value={paymentData?.city || ''} onChange={e => setPaymentData({...paymentData!, city: e.target.value})} className="p-2 border rounded" required/>
+            <select value={paymentData?.state || ''} onChange={e => setPaymentData({...paymentData!, state: e.target.value})} className="p-2 border rounded" required>
                 <option value="">Estado</option>
                 {brazilianStates.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
          </div>
-         <input type="text" placeholder="Número do Cartão (simulação)" onChange={e => setPaymentData({...paymentData, cardNumber: e.target.value})} className="w-full p-2 border rounded" required/>
+         <input type="text" placeholder="Número do Cartão (simulação)" onChange={e => setPaymentData({...paymentData!, cardNumber: e.target.value})} className="w-full p-2 border rounded" required/>
       </div>
     </form>
   );
@@ -218,11 +221,11 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpSuccess, onBackToLogin 
         )}
         
         {isFreemiumSelected ? (
-            <button onClick={handleFreemiumSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Finalizar Cadastro</button>
+            <button onClick={handleFreemiumSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Avançar para Verificação</button>
         ) : step < 3 ? (
             <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
         ) : (
-            <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Finalizar Cadastro</button>
+            <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Avançar para Verificação</button>
         )}
       </div>
     </>

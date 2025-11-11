@@ -53,15 +53,20 @@ export enum View {
     LIST = 'list',
 }
 
+export type UserRole = 'user' | 'admin' | 'financeiro';
+
 export interface UserData {
   fullName: string;
   email: string;
   birthDate: string; // YYYY-MM-DD
+  role: UserRole;
   geminiApiKey?: string;
   geminiApiKeyTestStatus?: 'untested' | 'valid' | 'invalid';
 }
 
 export interface PaymentData {
+  fullName?: string;
+  birthDate?: string;
   cpf: string;
   cep: string;
   address: string;
@@ -102,4 +107,17 @@ export interface AlertContact {
   name: string;
   email: string;
   whatsapp: string;
+}
+
+export interface AccessLog {
+    loginTime: string; // ISO string
+    logoutTime?: string; // ISO string
+}
+
+export interface StaffMember {
+    id: string;
+    email: string;
+    password?: string;
+    role: 'admin' | 'financeiro';
+    accessLogs: AccessLog[];
 }

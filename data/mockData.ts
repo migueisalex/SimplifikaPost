@@ -8,6 +8,7 @@ export const initialClients: Client[] = [
       fullName: 'Ana Silva',
       email: 'ana.silva@example.com',
       birthDate: '1990-05-15',
+      role: 'user',
     },
     paymentData: {
       cpf: '111.222.333-44',
@@ -29,6 +30,7 @@ export const initialClients: Client[] = [
       fullName: 'Bruno Costa',
       email: 'bruno.costa@example.com',
       birthDate: '1985-11-20',
+      role: 'user',
     },
     paymentData: {
       cpf: '222.333.444-55',
@@ -50,6 +52,7 @@ export const initialClients: Client[] = [
       fullName: 'Carlos de Souza',
       email: 'carlos.souza@example.com',
       birthDate: '1992-02-10',
+      role: 'user',
     },
     paymentData: {
         cpf: '333.444.555-66',
@@ -71,6 +74,7 @@ export const initialClients: Client[] = [
       fullName: 'Daniela Ferreira',
       email: 'daniela.ferreira@example.com',
       birthDate: '1998-09-30',
+      role: 'user',
     },
     paymentData: {
         cpf: '444.555.666-77',
@@ -92,6 +96,7 @@ export const initialClients: Client[] = [
       fullName: 'Eduardo Lima',
       email: 'eduardo.lima@example.com',
       birthDate: '1988-07-22',
+      role: 'user',
     },
     paymentData: {
         cpf: '555.666.777-88',

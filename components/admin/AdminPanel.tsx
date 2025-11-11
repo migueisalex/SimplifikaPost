@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { Client, AlertContact, UserData, PaymentData, Subscription } from '../../types';
+import { Client, AlertContact, UserData, PaymentData, Subscription, UserRole } from '../../types';
 import { initialClients, initialAlertContacts } from '../../data/mockData';
 import AdminHeader from './AdminHeader';
 import ClientList from './ClientList';
@@ -12,10 +12,12 @@ import ConfirmationModal from '../ConfirmationModal';
 type AdminView = 'clients' | 'alerts';
 
 interface AdminPanelProps {
+    userRole: 'admin' | 'financeiro';
     onLogout: () => void;
+    onOpenSettings: () => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ userRole, onLogout, onOpenSettings }) => {
     const [view, setView] = useState<AdminView>('clients');
     const [clients, setClients] = useLocalStorage<Client[]>('admin-clients', initialClients);
     const [alertContacts, setAlertContacts] = useLocalStorage<AlertContact[]>('admin-alert-contacts', initialAlertContacts);
@@ -70,7 +72,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans">
-            <AdminHeader onLogout={onLogout} />
+            <AdminHeader userRole={userRole} onLogout={onLogout} onOpenSettings={onOpenSettings} />
             <main className="container mx-auto p-4 sm:p-6 lg:p-8">
                  <div className="mb-6 flex justify-center sm:justify-start bg-gray-200 dark:bg-dark-card p-1 rounded-lg shadow-inner w-full sm:w-auto">
                     <button
@@ -79,21 +81,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                     >
                         Clientes
                     </button>
-                    <button
-                        onClick={() => setView('alerts')}
-                        className={`px-4 sm:px-6 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${view === 'alerts' ? 'bg-brand-primary text-white shadow' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-border'}`}
-                    >
-                        Alertas do Sistema
-                    </button>
+                    {userRole === 'admin' && (
+                        <button
+                            onClick={() => setView('alerts')}
+                            className={`px-4 sm:px-6 py-2 text-sm font-semibold rounded-md transition-colors duration-200 ${view === 'alerts' ? 'bg-brand-primary text-white shadow' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-dark-border'}`}
+                        >
+                            Alertas do Sistema
+                        </button>
+                    )}
                 </div>
                 
                 {view === 'clients' ? (
                     <ClientList 
                         clients={clients} 
                         setClients={setClients} 
-                        onViewClient={setViewingClient} 
+                        onViewClient={setViewingClient}
+                        userRole={userRole}
                     />
                 ) : (
+                    userRole === 'admin' &&
                     <AlertsManager 
                         contacts={alertContacts}
                         onAddContact={openNewContactModal}
