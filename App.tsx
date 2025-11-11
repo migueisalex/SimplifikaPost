@@ -1,5 +1,5 @@
 import React, { useState, useCallback, lazy, Suspense } from 'react';
-import { Post, View, Platform, HashtagGroup, UserData, PaymentData, Subscription, UserRole, StaffMember } from './types';
+import { Post, View, Platform, HashtagGroup, UserData, PaymentData, Subscription, StaffMember } from './types';
 import useLocalStorage from './hooks/useLocalStorage';
 import usePostsStorage from './hooks/usePostsStorage';
 import { useUsageTracker } from './hooks/useUsageTracker';
@@ -39,7 +39,7 @@ const App: React.FC = () => {
 
 
   const [currentUser, setCurrentUser] = useLocalStorage<UserData | null>('social-scheduler-current-user', null);
-  const [staff, setStaff] = useLocalStorage<StaffMember[]>('admin-staff-list', []);
+  const [, setStaff] = useLocalStorage<StaffMember[]>('admin-staff-list', []);
   const [hasSkippedConnectionStep, setHasSkippedConnectionStep] = useLocalStorage('social-scheduler-skipped-connection', false);
   const [connectedPlatforms, setConnectedPlatforms] = useLocalStorage<Platform[]>('social-scheduler-connected-platforms', []);
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData>('social-scheduler-payment-data', {

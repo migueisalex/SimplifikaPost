@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { Client, AlertContact, UserData, PaymentData, Subscription, UserRole } from '../../types';
+import { Client, AlertContact, UserData, PaymentData, Subscription } from '../../types';
 import { initialClients, initialAlertContacts } from '../../data/mockData';
 import AdminHeader from './AdminHeader';
 import ClientList from './ClientList';
