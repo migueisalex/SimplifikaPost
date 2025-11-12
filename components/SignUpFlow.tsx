@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserData, PaymentData, Subscription, PackageTier } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import LoadingSpinner from './LoadingSpinner';
+import TermsOfUseModal from './TermsOfUseModal';
 
 interface SignUpFlowProps {
   onRegistrationPending: (email: string) => void;
@@ -32,6 +33,9 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
   const [paymentData, setPaymentData] = useLocalStorage<PaymentData | null>('social-scheduler-payment-data', null);
   const [, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+
   // CEP states
   const [isCepLoading, setIsCepLoading] = useState(false);
   const [cepError, setCepError] = useState('');
@@ -49,6 +53,10 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
       }
       if (accountData.password.length < 6) {
         setError('A senha deve ter pelo menos 6 caracteres.');
+        return;
+      }
+      if (!hasAcceptedTerms) {
+        setError('Você deve aceitar os Termos de Uso para continuar.');
         return;
       }
     }
@@ -69,11 +77,15 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
           role: 'user',
       };
 
+      // Set state via hooks for consistency
       setUserData(finalUserData);
       setSubscription(subscriptionData);
+
+      // Also write directly to localStorage to avoid a race condition with the component unmounting
+      localStorage.setItem('social-scheduler-user-data', JSON.stringify(finalUserData));
+      localStorage.setItem('social-scheduler-subscription', JSON.stringify(subscriptionData));
       
       // Simulação: Após salvar, redireciona para a verificação de email
-      alert("Conta criada! Enviamos um código de verificação para o seu e-mail.");
       onRegistrationPending(accountData.email);
   }
 
@@ -84,6 +96,11 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
         setStep(1);
         return;
       }
+       if (!hasAcceptedTerms) {
+        setError('Você deve aceitar os Termos de Uso para continuar.');
+        setStep(1);
+        return;
+      }
       
       const freemiumUserData: UserData = {
           fullName: 'Usuário Freemium',
@@ -91,12 +108,17 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
           birthDate: '',
           role: 'user',
       };
-      setUserData(freemiumUserData);
       
       const freemiumSubscription: Subscription = { package: 0, hasAiAddon: false };
+
+      // Set state via hooks for consistency
+      setUserData(freemiumUserData);
       setSubscription(freemiumSubscription);
       
-      alert("Conta Freemium criada! Enviamos um código de verificação para o seu e-mail.");
+      // Also write directly to localStorage to avoid a race condition
+      localStorage.setItem('social-scheduler-user-data', JSON.stringify(freemiumUserData));
+      localStorage.setItem('social-scheduler-subscription', JSON.stringify(freemiumSubscription));
+
       onRegistrationPending(accountData.email);
   };
 
@@ -116,7 +138,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
       if (data.erro) {
         setCepError('CEP não encontrado.');
       } else {
-        setPaymentData(prev => ({ ...prev!, address: data.logouro, district: data.bairro, city: data.localidade, state: data.uf }));
+        setPaymentData(prev => ({ ...prev!, address: data.logradouro, district: data.bairro, city: data.localidade, state: data.uf }));
       }
     } catch (error) {
       setCepError('Erro ao buscar CEP.');
@@ -137,9 +159,29 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
             <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Senha</label>
             <input type="password" value={accountData.password} onChange={e => setAccountData({...accountData, password: e.target.value})} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline" required />
         </div>
-        <div className="mb-6">
+        <div className="mb-4">
             <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Confirmar Senha</label>
             <input type="password" value={accountData.confirmPassword} onChange={e => setAccountData({...accountData, confirmPassword: e.target.value})} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline" required />
+        </div>
+         <div className="mb-6">
+          <label className="flex items-center text-sm">
+            <input 
+              type="checkbox" 
+              checked={hasAcceptedTerms} 
+              onChange={(e) => setHasAcceptedTerms(e.target.checked)} 
+              className="h-4 w-4 text-brand-primary focus:ring-brand-secondary rounded border-gray-300 dark:bg-gray-800 dark:border-gray-600"
+            />
+            <span className="ml-2 text-gray-600 dark:text-gray-300">
+              Eu li e aceito os{' '}
+              <button 
+                type="button" 
+                onClick={() => setIsTermsModalOpen(true)} 
+                className="font-semibold text-brand-primary hover:underline"
+              >
+                Termos de Uso
+              </button>
+            </span>
+          </label>
         </div>
     </div>
   );
@@ -223,11 +265,18 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
         {isFreemiumSelected ? (
             <button onClick={handleFreemiumSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Avançar para Verificação</button>
         ) : step < 3 ? (
-            <button onClick={handleNextStep} className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded">Próximo</button>
+            <button 
+                onClick={handleNextStep} 
+                disabled={step === 1 && !hasAcceptedTerms}
+                className="bg-brand-primary hover:bg-brand-secondary text-white font-bold py-2 px-6 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Próximo
+            </button>
         ) : (
             <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Avançar para Verificação</button>
         )}
       </div>
+       {isTermsModalOpen && <TermsOfUseModal onClose={() => setIsTermsModalOpen(false)} />}
     </>
   );
 };

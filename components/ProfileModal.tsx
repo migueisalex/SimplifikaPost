@@ -109,7 +109,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ initialUserData, initialPay
       } else {
         setPaymentFormData(prev => ({
           ...prev,
-          address: data.logouro,
+          address: data.logradouro,
           district: data.bairro,
           city: data.localidade,
           state: data.uf,
