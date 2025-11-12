@@ -1,0 +1,286 @@
+<style>
+  .accordion-item {
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .dark .accordion-item {
+    border-bottom-color: #374151;
+  }
+  .accordion-button {
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: #1f2937;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .dark .accordion-button {
+    color: #f9fafb;
+  }
+  .accordion-button:hover {
+    background-color: #f9fafb;
+  }
+  .dark .accordion-button:hover {
+    background-color: #1f2937;
+  }
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    line-height: 1.6;
+  }
+  .accordion-icon {
+    transition: transform 0.3s ease-in-out;
+  }
+  .accordion-button[aria-expanded="true"] .accordion-icon {
+    transform: rotate(45deg);
+  }
+  /* Specific styles for help content */
+  .help-content {
+    padding: 1rem;
+  }
+  .help-content h4 {
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+  .help-content p {
+    margin-bottom: 0.5rem;
+  }
+  .help-content ul, .help-content ol {
+    list-style-position: inside;
+    padding-left: 1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+   .help-content ul li, .help-content ol li {
+    margin-bottom: 0.5rem;
+  }
+  .help-content ul { list-style-type: disc; }
+  .help-content ol { list-style-type: decimal; }
+  .help-content strong { font-weight: 700; color: #111827; }
+  .dark .help-content strong { color: #f9fafb; }
+</style>
+
+<div class="accordion-container">
+    <!-- Seção 1 -->
+    <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 1: Primeiros Passos</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                <h4>O que é o Simplifika Post?</h4>
+                <p>O Simplifika Post é seu assistente pessoal para planejamento de conteúdo em redes sociais. Nossa plataforma foi desenhada para te ajudar a organizar, criar e visualizar todo o seu calendário de publicações de forma intuitiva e eficiente.</p>
+                <p><strong>Importante:</strong> Nós somos uma ferramenta de <strong>planejamento e organização</strong>, e não de publicação automática. Por que fazemos isso?</p>
+                <ul>
+                    <li><strong>Para te dar o controle final:</strong> Você decide o momento exato da publicação, podendo fazer ajustes de última hora.</li>
+                    <li><strong>Para proteger sua conta:</strong> Ferramentas de automação não oficiais podem, por vezes, violar os termos de serviço das redes sociais, colocando sua conta em risco. Com o Simplifika Post, sua conta permanece 100% segura.</li>
+                </ul>
+
+                <h4>Criando sua Conta e Fazendo Login</h4>
+                <p>Começar a usar é muito fácil. Siga os passos:</p>
+                <ol>
+                    <li>Na tela inicial, clique em <strong>"Criar uma conta"</strong>.</li>
+                    <li>Preencha seu e-mail e crie uma senha segura (mínimo de 6 caracteres).</li>
+                    <li>Marque a caixa confirmando que você leu e aceita nossos <strong>Termos de Uso</strong>.</li>
+                    <li>Clique em <strong>"Avançar"</strong> e escolha seu plano (incluindo a opção Freemium/Grátis).</li>
+                    <li>Após finalizar o cadastro, enviaremos um <strong>código de verificação</strong> para o seu e-mail.</li>
+                    <li>Insira o código na tela de verificação para ativar sua conta e fazer o primeiro login.</li>
+                </ol>
+
+                <h4>Conectando suas Redes Sociais</h4>
+                <p>Para que o sistema saiba para quais plataformas você está planejando, é preciso conectá-las:</p>
+                <ol>
+                    <li>Na primeira tela que aparece após o login, você verá a lista de redes sociais disponíveis (Instagram, Facebook, etc.).</li>
+                    <li>Basta clicar no botão da plataforma que deseja conectar. Uma janela de autorização (simulada) aparecerá.</li>
+                    <li>Esse é um processo seguro (baseado em OAuth) que nos dá a permissão para identificar seu perfil, mas nunca para acessar sua senha.</li>
+                    <li>Para desvincular uma conta já conectada, simplesmente clique no pequeno ícone de <strong>"X" vermelho</strong> que aparece sobre ela.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <!-- Seção 2 -->
+    <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 2: O Coração do Sistema: Posts</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                <h4>Mídia (Imagens e Vídeos)</h4>
+                <ul>
+                    <li><strong>Como Adicionar:</strong> Clique em <strong>"Adicionar Mídia"</strong> para selecionar arquivos do seu computador. Você pode adicionar até 10 mídias por post, com um limite de 15MB por arquivo.</li>
+                    <li><strong>Navegar (Carrossel):</strong> Se você adicionar múltiplas mídias, setas aparecerão sobre a imagem principal para você navegar entre elas. As miniaturas abaixo também permitem selecionar e reordenar.</li>
+                    <li><strong>Remover Mídia:</strong> Para excluir uma imagem ou vídeo, clique no <strong>"X"</strong> que aparece no canto da miniatura correspondente.</li>
+                </ul>
+
+                <h4>O Editor de Imagem</h4>
+                <p>Para garantir que suas imagens fiquem perfeitas, use nosso editor integrado:</p>
+                <ol>
+                    <li>Após adicionar uma imagem, clique no botão <strong>"Editar"</strong> que aparece sobre ela.</li>
+                    <li><strong>Recortar:</strong> Escolha o formato ideal (1:1 Quadrado, 4:5 Retrato, etc.). A área de corte aparecerá sobre a imagem. Você pode arrastar a imagem para ajustar o enquadramento.</li>
+                    <li><strong>Ajustes:</strong> Use os controles deslizantes para ajustar Brilho, Contraste e Saturação.</li>
+                    <li><strong>Filtros:</strong> Aplique filtros como Preto e Branco ou Sépia para dar um toque especial.</li>
+                    <li><strong>Salvar:</strong> Lembre-se sempre de clicar em <strong>"Salvar Alterações"</strong> para aplicar suas edições. Imagens com um ícone de alerta amarelo precisam ser recortadas antes que o post possa ser salvo.</li>
+                </ol>
+
+                <h4>Texto e Legenda (Editor Avançado)</h4>
+                <p>Use nosso editor para criar legendas mais ricas:</p>
+                <ul>
+                    <li>Selecione um trecho do seu texto e use os botões na barra de ferramentas para aplicar <strong>Negrito</strong>, <em>Itálico</em>, <ins>Sublinhado</ins> ou <s>Tachado</s>.</li>
+                    <li><strong>Atenção:</strong> Essa formatação usa caracteres especiais (Unicode) para funcionar. Embora seja compatível com a maioria das redes (como Instagram), a aparência pode variar ou não ser replicada perfeitamente em todas as plataformas.</li>
+                </ul>
+                
+                <h4>Agendamento</h4>
+                <p>Na parte inferior do modal de criação de post, você encontrará os campos de data e hora. Selecione o dia e o horário exato em que você planeja fazer a sua publicação.</p>
+            </div>
+        </div>
+    </div>
+    <!-- Seção 3 -->
+    <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 3: Turbinando com Inteligência Artificial</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                 <h4>Gerando Textos e Copies Profissionais</h4>
+                 <ul>
+                    <li><strong>Como Funciona:</strong> Escreva uma ideia inicial ou um rascunho da sua legenda na caixa de texto. Em seguida, clique no ícone do Gemini (✨) na barra de ferramentas do editor.</li>
+                    <li><strong>O que Esperar:</strong> A IA analisará seu texto e retornará 3 opções de copies reescritas de forma mais profissional e engajante. Basta escolher a que mais te agrada e clicar em "Usar este texto".</li>
+                </ul>
+
+                <h4>Encontrando as Hashtags Perfeitas</h4>
+                 <ul>
+                    <li><strong>Como Funciona:</strong> Com a descrição do seu post já escrita, vá até a seção de "Grupos de Hashtags" e clique em <strong>"Criar Grupo +IA"</strong>. No modal que se abre, clique no botão <strong>"Gerar Hashtags com IA"</strong>.</li>
+                    <li><strong>O que Esperar:</strong> A IA lerá o contexto do seu post e sugerirá 4 conjuntos de hashtags otimizadas para o seu nicho. Clique em "Aplicar" no conjunto desejado para adicioná-lo ao final da sua legenda.</li>
+                </ul>
+
+                <h4>Criando Imagens do Zero com IA</h4>
+                 <ul>
+                    <li><strong>Como Funciona:</strong> Na área de mídia, clique em <strong>"Gerar Imagem com IA"</strong>.</li>
+                    <li><strong>Escrevendo o Prompt:</strong> Na caixa de texto, descreva detalhadamente a imagem que você quer criar. Seja específico sobre cores, estilo (ex: "foto realista", "desenho aquarela"), objetos e o cenário.</li>
+                    <li><strong>Imagem de Referência (Opcional):</strong> Você pode anexar uma imagem como referência de estilo ou composição para guiar a IA.</li>
+                    <li><strong>O que Esperar:</strong> A IA irá gerar uma imagem única e de alta qualidade baseada na sua descrição.</li>
+                </ul>
+
+                <h4>Melhorando a Qualidade de Imagens Existentes</h4>
+                 <ul>
+                    <li><strong>Como Funciona:</strong> Quando você sobe uma imagem com menos de 1080 pixels de largura (considerada baixa resolução para redes sociais), o sistema exibirá um alerta.</li>
+                    <li><strong>Ação:</strong> Neste alerta, você terá a opção <strong>"Melhorar com IA"</strong>. Ao clicar, a IA irá recriar sua imagem em uma resolução maior, melhorando a nitidez e os detalhes, mantendo a composição original.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Seção 4 -->
+     <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 4: Organizando seu Conteúdo</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                <h4>Navegando pelo Calendário</h4>
+                <ul>
+                    <li>A visão de Calendário te dá uma perspectiva mensal do seu planejamento.</li>
+                    <li>Passe o mouse sobre um post para ver uma prévia da mídia principal.</li>
+                    <li>Clique em um post para abrir uma janela com todos os detalhes daquela publicação.</li>
+                </ul>
+                
+                <h4>Usando a Visão de Lista</h4>
+                <ul>
+                    <li>A Lista organiza seus posts em ordem cronológica e é dividida em duas abas:
+                        <ul>
+                            <li><strong>Agendados:</strong> Todos os posts que ainda não foram marcados como publicados.</li>
+                            <li><strong>Histórico:</strong> Posts que você já marcou como "Publicado".</li>
+                        </ul>
+                    </li>
+                    <li><strong>Ações Rápidas:</strong> Use os botões em cada card para <strong>Editar</strong>, <strong>Excluir</strong> ou <strong>Marcar como Publicado</strong> sem precisar abrir o post.</li>
+                </ul>
+                
+                <h4>Clonando Posts para Reutilizar Conteúdo</h4>
+                <ul>
+                    <li><strong>Para que serve?</strong> É perfeito para reutilizar um post bem-sucedido em uma nova data ou para criar um modelo base para posts futuros, mantendo as mídias e o texto.</li>
+                    <li><strong>Como fazer?</strong> Na <strong>Visão de Lista</strong>, clique no botão <strong>"Clonar Post"</strong> (disponível para posts no Histórico). Você também pode clonar a partir da tela de <strong>Detalhes</strong> (acessada pelo Calendário), clicando no menu de opções (três pontinhos).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- Seção 5 -->
+    <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 5: Gerenciando sua Conta</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                <h4>Alterando Dados Pessoais e Senha</h4>
+                <ul>
+                    <li>Clique no ícone de perfil (boneco) no canto superior direito e vá para a aba <strong>"Meus Dados"</strong>. Lá, você pode editar seu nome e alterar sua senha.</li>
+                </ul>
+
+                <h4>Atualizando Informações de Pagamento</h4>
+                <ul>
+                    <li>Acesse seu perfil e vá para a aba <strong>"Pagamento"</strong>. Nela, você pode atualizar seu endereço de cobrança e os dados do cartão de crédito.</li>
+                </ul>
+
+                <h4>Entendendo seu Plano e Limites de Uso (Freemium)</h4>
+                <p>Se você está no plano gratuito, seus limites mensais são:</p>
+                <ul>
+                    <li><strong>Posts:</strong> 5 agendamentos por mês.</li>
+                    <li><strong>IA de Texto:</strong> 20 usos (sugestão de texto ou hashtags) por mês.</li>
+                    <li><strong>IA de Imagem:</strong> 2 criações por mês.</li>
+                </ul>
+                <p>Você pode acompanhar seu uso na aba <strong>"Meu Plano"</strong> dentro do seu Perfil. Os limites são zerados no primeiro dia de cada mês.</p>
+
+                <h4>Fazendo Upgrade, Downgrade ou Cancelamento</h4>
+                <ul>
+                    <li>No seu Perfil, vá para a aba <strong>"Meu Plano"</strong> e clique no botão <strong>"Alterar Plano"</strong>. Você será levado à página de planos para escolher uma nova opção, fazer um downgrade para o Freemium ou solicitar o cancelamento.</li>
+                </ul>
+                
+                <h4>(Para Usuários Pro) Usando sua Própria Chave de API Gemini</h4>
+                <p>Para ter uso ilimitado de IA, o plano Pro permite que você use sua própria chave.</p>
+                <ol>
+                    <li>Obtenha sua chave de API gratuita no <strong>Google AI Studio</strong>.</li>
+                    <li>Acesse seu Perfil aqui no Simplifika Post e vá para a aba <strong>"API de IA"</strong>.</li>
+                    <li>Cole sua chave no campo indicado e clique em <strong>"Testar"</strong> para validar. Depois, clique em <strong>"Salvar Alterações"</strong>.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <!-- Seção 6 -->
+    <div class="accordion-item">
+        <button class="accordion-button" aria-expanded="false">
+            <span>Seção 6: Solução de Problemas (FAQ)</span>
+            <span class="accordion-icon">+</span>
+        </button>
+        <div class="accordion-content">
+            <div class="help-content">
+                <h4>P: "Não consigo selecionar uma plataforma para postar."</h4>
+                <p><strong>R:</strong> Isso geralmente ocorre porque a plataforma (ex: TikTok ou YouTube) não está incluída no seu plano atual. Acesse a aba <strong>"Meu Plano"</strong> no seu perfil para verificar os recursos disponíveis e considerar um upgrade.</p>
+
+                <h4>P: "Minha imagem está com um ícone de alerta amarelo."</h4>
+                <p><strong>R:</strong> Este alerta indica que a imagem precisa ser recortada para o formato de post que você selecionou (ex: Quadrado 1:1). Clique no botão <strong>"Editar"</strong> sobre a imagem e ajuste o recorte para que o alerta desapareça.</p>
+
+                <h4>P: "A IA não está funcionando ou apresenta um erro."</h4>
+                <p><strong>R:</strong> Os dois motivos mais comuns são:
+                <ul>
+                    <li><strong>Limite Atingido (Plano Freemium):</strong> Você pode ter atingido seu limite mensal de usos de IA. Verifique seu consumo na aba "Meu Plano".</li>
+                    <li><strong>Chave de API Inválida (Plano Pro):</strong> Se você inseriu sua própria chave, verifique se ela está correta e se possui créditos na sua conta Google AI.</li>
+                </ul>
+                </p>
+
+                <h4>P: "Esqueci minha senha. O que eu faço?"</h4>
+                <p><strong>R:</strong> Na tela de login, clique no link <strong>"Esqueci minha senha"</strong>. Insira seu e-mail de cadastro e nós enviaremos um link para que você possa criar uma nova senha.</p>
+            </div>
+        </div>
+    </div>
+</div>

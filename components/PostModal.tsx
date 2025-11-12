@@ -107,6 +107,7 @@ const optimizeImageForSave = (dataUrl: string, aspectRatio: number): Promise<str
   });
 };
 
+const postTypeOrder = [PostType.FEED, PostType.STORY, PostType.REELS];
 
 const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedPlatforms, onConnectPlatform, hashtagGroups, onSaveHashtagGroup, onOpenDeleteGroupModal, allowedPlatforms, canGenerateImages, onUpgradeRequest, canGenerateText, incrementAiGenerationCount, incrementImageGenerationCount, userApiKey }) => {
   const [content, setContent] = useState('');
@@ -583,9 +584,9 @@ const PostModal: React.FC<PostModalProps> = ({ post, onSave, onClose, connectedP
                     </div>
               </div>
               <div>
-                <h3 className="font-bold text-gray-700 dark:text-gray-200 mb-2">Tipo de Post</h3>
+                <h3 className="font-bold text-gray-700 dark:text-gray-200 mb-2">Postar em:</h3>
                  <div className="flex flex-wrap gap-2">
-                     {Object.values(PostType).map(type => (
+                     {postTypeOrder.map(type => (
                         <button key={type} onClick={() => setPostType(type)} className={`py-2 px-4 rounded-full text-sm font-semibold transition ${postType === type ? 'bg-brand-secondary text-white' : 'bg-gray-200 dark:bg-dark-border hover:bg-gray-300 dark:hover:bg-gray-600'}`}>
                             {type}
                         </button>

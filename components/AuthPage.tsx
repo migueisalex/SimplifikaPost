@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import SignUpFlow from './SignUpFlow';
 import { Subscription, UserData, StaffMember } from '../types';
 import VerificationCodeForm from './VerificationCodeForm';
 import useLocalStorage from '../hooks/useLocalStorage';
+import InfoModal from './InfoModal';
 
 interface AuthPageProps {
   onLoginSuccess: (user: UserData, subscription: Subscription) => void;
@@ -19,6 +20,10 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onAdminLoginSuccess
   const [error, setError] = useState('');
   const [staffList, setStaffList] = useLocalStorage<StaffMember[]>('admin-staff-list', []);
 
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({ title: '', content: '' });
+  const [isInfoModalLoading, setIsInfoModalLoading] = useState(false);
+
   // Garante que o admin principal sempre exista.
   useEffect(() => {
     const adminExists = staffList.some(s => s.email === 'migueisalex@gmail.com');
@@ -33,6 +38,22 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onAdminLoginSuccess
       setStaffList(prevList => [...prevList, mainAdmin]);
     }
   }, [staffList, setStaffList]);
+
+  const handleOpenInfoModal = useCallback(async (file: string, title: string) => {
+    setIsInfoModalLoading(true);
+    setInfoModalContent({ title, content: '' });
+    setIsInfoModalOpen(true);
+    try {
+      const response = await fetch(`/${file}`);
+      const htmlContent = await response.text();
+      setInfoModalContent({ title, content: htmlContent });
+    } catch (error) {
+      console.error('Failed to fetch info content:', error);
+      setInfoModalContent({ title, content: '<p>Ocorreu um erro ao carregar o conteúdo. Tente novamente mais tarde.</p>' });
+    } finally {
+      setIsInfoModalLoading(false);
+    }
+  }, []);
 
 
   const handleLogin = (e: React.FormEvent) => {
@@ -215,31 +236,42 @@ const AuthPage: React.FC<AuthPageProps> = ({ onLoginSuccess, onAdminLoginSuccess
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4">
-      <div className="w-full max-w-lg">
-        <div className="bg-white dark:bg-dark-card shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
-            <h1 className="text-3xl font-bold text-center mb-6 font-exo2 uppercase tracking-wider text-gray-700 dark:text-white">Simplifika Post</h1>
-            {flowState === 'login' && renderLoginForm()}
-            {flowState === 'signup' && (
-                <SignUpFlow 
-                    onRegistrationPending={handleRegistrationPending} 
-                    onBackToLogin={() => setFlowState('login')}
-                />
-            )}
-             {flowState === 'verify' && (
-                <VerificationCodeForm
-                    email={verificationEmail}
-                    onVerificationSuccess={handleVerificationSuccess}
-                />
-             )}
-              {flowState === 'forgotPassword' && renderForgotPasswordForm()}
-              {flowState === 'forgotPasswordSuccess' && renderForgotPasswordSuccessMessage()}
+    <>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg p-4">
+        <div className="w-full max-w-lg">
+            <div className="bg-white dark:bg-dark-card shadow-xl rounded-lg px-8 pt-6 pb-8 mb-4">
+                <h1 className="text-3xl font-bold text-center mb-6 font-exo2 uppercase tracking-wider text-gray-700 dark:text-white">Simplifika Post</h1>
+                {flowState === 'login' && renderLoginForm()}
+                {flowState === 'signup' && (
+                    <SignUpFlow 
+                        onRegistrationPending={handleRegistrationPending} 
+                        onBackToLogin={() => setFlowState('login')}
+                        onOpenTermsModal={() => handleOpenInfoModal('terms.html', 'Termos de Uso e Política de Privacidade')}
+                    />
+                )}
+                {flowState === 'verify' && (
+                    <VerificationCodeForm
+                        email={verificationEmail}
+                        onVerificationSuccess={handleVerificationSuccess}
+                    />
+                )}
+                {flowState === 'forgotPassword' && renderForgotPasswordForm()}
+                {flowState === 'forgotPasswordSuccess' && renderForgotPasswordSuccessMessage()}
+            </div>
+            <p className="text-center text-gray-500 text-xs">
+            &copy;2024 Simplifika Post. Todos os direitos reservados.
+            </p>
         </div>
-        <p className="text-center text-gray-500 text-xs">
-          &copy;2024 Simplifika Post. Todos os direitos reservados.
-        </p>
-      </div>
-    </div>
+        </div>
+         <InfoModal
+            isOpen={isInfoModalOpen}
+            onClose={() => setIsInfoModalOpen(false)}
+            title={infoModalContent.title}
+            isLoading={isInfoModalLoading}
+        >
+            <div dangerouslySetInnerHTML={{ __html: infoModalContent.content }} />
+        </InfoModal>
+    </>
   );
 };
 

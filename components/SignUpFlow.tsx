@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { UserData, PaymentData, Subscription, PackageTier } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import LoadingSpinner from './LoadingSpinner';
-import TermsOfUseModal from './TermsOfUseModal';
 
 interface SignUpFlowProps {
   onRegistrationPending: (email: string) => void;
   onBackToLogin: () => void;
+  onOpenTermsModal: () => void;
 }
 
 const packageDetails: Record<PackageTier, { name: string; price: string; features: string[], description?: string }> = {
@@ -22,7 +22,7 @@ const brazilianStates = [
   'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackToLogin }) => {
+const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackToLogin, onOpenTermsModal }) => {
   const [step, setStep] = useState(1);
   const [error, setError] = useState('');
   
@@ -34,7 +34,6 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
   const [, setSubscription] = useLocalStorage<Subscription | null>('social-scheduler-subscription', null);
 
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
-  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // CEP states
   const [isCepLoading, setIsCepLoading] = useState(false);
@@ -175,7 +174,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
               Eu li e aceito os{' '}
               <button 
                 type="button" 
-                onClick={() => setIsTermsModalOpen(true)} 
+                onClick={onOpenTermsModal} 
                 className="font-semibold text-brand-primary hover:underline"
               >
                 Termos de Uso
@@ -276,7 +275,6 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onRegistrationPending, onBackTo
             <button onClick={handleFinalSubmit} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">Avançar para Verificação</button>
         )}
       </div>
-       {isTermsModalOpen && <TermsOfUseModal onClose={() => setIsTermsModalOpen(false)} />}
     </>
   );
 };

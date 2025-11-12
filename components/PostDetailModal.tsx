@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Post } from '../types';
+import { Post, MediaItem } from '../types';
 import { PlatformIcons } from './PlatformIcons';
 import CarouselPreview from './CarouselPreview';
 
@@ -90,7 +90,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose, onEdit
                  <CarouselPreview 
                     media={post.media}
                     aspectRatio={post.media.length > 0 ? post.media[0].aspectRatio : 1}
-                    onEdit={() => onEdit(post)}
+                    onEdit={(_item: MediaItem) => onEdit(post)}
                     onRemove={() => {}} // Remove is disabled in view-only mode
                     currentIndex={currentMediaIndex}
                     onCurrentIndexChange={setCurrentMediaIndex}

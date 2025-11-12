@@ -64,10 +64,12 @@ const CarouselPreview: React.FC<CarouselPreviewProps> = ({ media, aspectRatio, o
 
         {/* Action Buttons */}
         <div className="absolute bottom-2 right-2 z-10 flex gap-2">
-             <button type="button" onClick={() => onEdit(currentMedia)} className="bg-brand-primary text-white font-bold py-1.5 px-3 rounded-full text-sm hover:bg-brand-secondary transition shadow-lg opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                <span>Editar</span>
-            </button>
+             {currentMedia.type.startsWith('image/') && (
+                <button type="button" onClick={() => onEdit(currentMedia)} className="bg-brand-primary text-white font-bold py-1.5 px-3 rounded-full text-sm hover:bg-brand-secondary transition shadow-lg opacity-0 group-hover:opacity-100 focus-within:opacity-100 flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    <span>Editar</span>
+                </button>
+             )}
         </div>
         <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(currentMedia.id); }} className="absolute top-2 right-2 z-10 bg-black bg-opacity-60 text-white rounded-full p-1.5 hover:bg-red-500 opacity-0 group-hover:opacity-100 transition">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>

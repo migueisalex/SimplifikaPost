@@ -14,6 +14,8 @@ import DeleteHashtagGroupModal from './components/DeleteHashtagGroupModal';
 import UpgradePage from './components/UpgradePage';
 import UpgradeModal from './components/UpgradeModal';
 import LoadingSpinner from './components/LoadingSpinner';
+import Footer from './components/Footer';
+import InfoModal from './components/InfoModal';
 
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 const StaffManagementModal = lazy(() => import('./components/admin/StaffManagementModal'));
@@ -36,6 +38,10 @@ const App: React.FC = () => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeReason, setUpgradeReason] = useState('');
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState({ title: '', content: '' });
+  const [isInfoModalLoading, setIsInfoModalLoading] = useState(false);
 
 
   const [currentUser, setCurrentUser] = useLocalStorage<UserData | null>('social-scheduler-current-user', null);
@@ -60,6 +66,22 @@ const App: React.FC = () => {
   const handleUpgradeRequest = useCallback((reason: string) => {
     setUpgradeReason(reason);
     setIsUpgradeModalOpen(true);
+  }, []);
+  
+  const handleOpenInfoModal = useCallback(async (file: string, title: string) => {
+    setIsInfoModalLoading(true);
+    setInfoModalContent({ title, content: '' });
+    setIsInfoModalOpen(true);
+    try {
+      const response = await fetch(`/${file}`);
+      const htmlContent = await response.text();
+      setInfoModalContent({ title, content: htmlContent });
+    } catch (error) {
+      console.error('Failed to fetch info content:', error);
+      setInfoModalContent({ title, content: '<p>Ocorreu um erro ao carregar o conteúdo. Tente novamente mais tarde.</p>' });
+    } finally {
+      setIsInfoModalLoading(false);
+    }
   }, []);
 
   const getPermissions = useCallback(() => {
@@ -312,7 +334,7 @@ const App: React.FC = () => {
     />;
   } else {
     pageContent = (
-      <div className="min-h-screen bg-gray-100 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans">
+      <div className="min-h-screen bg-gray-100 dark:bg-dark-bg text-gray-800 dark:text-gray-200 font-sans flex flex-col">
         <header className="bg-white dark:bg-dark-card shadow-md">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white font-exo2 uppercase tracking-wider">
@@ -352,7 +374,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <main className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
           <div className="mb-6 flex justify-center sm:justify-start bg-gray-200 dark:bg-dark-card p-1 rounded-lg shadow-inner w-full sm:w-auto">
             <button
               onClick={() => setView(View.CALENDAR)}
@@ -376,6 +398,8 @@ const App: React.FC = () => {
             )}
           </div>
         </main>
+        
+        <Footer onLinkClick={handleOpenInfoModal} />
 
         {isModalOpen && (
           <PostModal
@@ -464,6 +488,15 @@ const App: React.FC = () => {
   return (
     <>
       {pageContent}
+
+      <InfoModal
+        isOpen={isInfoModalOpen}
+        onClose={() => setIsInfoModalOpen(false)}
+        title={infoModalContent.title}
+        isLoading={isInfoModalLoading}
+      >
+        <div dangerouslySetInnerHTML={{ __html: infoModalContent.content }} />
+      </InfoModal>
 
       {isUpgradeModalOpen && (
         <UpgradeModal

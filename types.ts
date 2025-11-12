@@ -6,7 +6,7 @@ export enum Platform {
 }
 
 export enum PostType {
-  FEED = 'Feed',
+  FEED = 'Post',
   REELS = 'Reels',
   STORY = 'Story',
 }
