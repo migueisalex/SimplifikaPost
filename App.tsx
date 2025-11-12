@@ -6,7 +6,6 @@ import { useUsageTracker } from './hooks/useUsageTracker';
 import PostModal from './components/PostModal';
 import CalendarView from './components/CalendarView';
 import ListView from './components/ListView';
-import AuthPage from './components/AuthPage';
 import ConnectAccountsPage from './components/ConnectAccountsPage';
 import PostDetailModal from './components/PostDetailModal';
 import ConfirmationModal from './components/ConfirmationModal';
@@ -18,6 +17,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 const StaffManagementModal = lazy(() => import('./components/admin/StaffManagementModal'));
+const AuthPage = lazy(() => import('./components/AuthPage'));
 
 const App: React.FC = () => {
   const [posts, setPosts] = usePostsStorage('social-scheduler-posts', []);
@@ -275,6 +275,12 @@ const App: React.FC = () => {
   
   let pageContent;
 
+  const loadingFallback = (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg">
+      <LoadingSpinner />
+    </div>
+  );
+
   if (isUpgrading) {
     pageContent = <UpgradePage onUpgradeSuccess={(newSub) => {
         setSubscription(newSub);
@@ -282,20 +288,20 @@ const App: React.FC = () => {
     }} />;
   } else if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'financeiro')) {
     pageContent = (
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-dark-bg">
-          <LoadingSpinner />
-        </div>
-      }>
+      <Suspense fallback={loadingFallback}>
         <AdminPanel userRole={currentUser.role} onLogout={handleLogout} onOpenSettings={() => setIsStaffModalOpen(true)} />
       </Suspense>
     );
   } else if (!currentUser) {
-    pageContent = <AuthPage 
-        onLoginSuccess={handleLoginSuccess} 
-        onAdminLoginSuccess={handleAdminLogin}
-        onTestUserLogin={handleTestUserLogin} 
-    />;
+    pageContent = (
+      <Suspense fallback={loadingFallback}>
+        <AuthPage 
+            onLoginSuccess={handleLoginSuccess} 
+            onAdminLoginSuccess={handleAdminLogin}
+            onTestUserLogin={handleTestUserLogin} 
+        />
+      </Suspense>
+    );
   } else if (!hasSkippedConnectionStep) {
     pageContent = <ConnectAccountsPage 
       onContinue={() => setHasSkippedConnectionStep(true)} 
